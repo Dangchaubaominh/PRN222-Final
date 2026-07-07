@@ -1,0 +1,14 @@
+# Build artifacts
+bin/
+obj/
+.vs/
+*.user
+
+# Secrets (dùng appsettings.example.json làm mẫu; điền secret vào appsettings.json + User Secrets)
+RagChatbot.RazorPages/appsettings.json
+
+# User uploads (không commit file người dùng)
+RagChatbot.RazorPages/wwwroot/uploads/
+
+# Logs
+*.log
