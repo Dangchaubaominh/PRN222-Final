@@ -1,0 +1,139 @@
+@model RagChatbot.RazorPages.ViewComponents.NotificationBellViewModel
+@{
+    string DotClass(string t) => t switch
+    {
+        "success" => "nt-success",
+        "warning" => "nt-warning",
+        "error"   => "nt-error",
+        _         => "nt-info"
+    };
+}
+
+<div class="notif-wrap">
+    <button type="button" class="notif-bell" id="notifBell" title="Thông báo" onclick="toggleNotif(event)">
+        <i class="bi bi-bell"></i>
+        <span class="notif-badge" id="notifBadge" style="@(Model.UnreadCount > 0 ? "" : "display:none")">
+            @(Model.UnreadCount > 99 ? "99+" : Model.UnreadCount.ToString())
+        </span>
+    </button>
+
+    <div class="notif-panel" id="notifPanel">
+        <div class="notif-panel-head">
+            <span><i class="bi bi-bell me-1"></i> Thông báo</span>
+            <button type="button" class="notif-clear" id="notifClearAll" onclick="clearAllNotif(event)" title="Xóa tất cả thông báo">
+                <i class="bi bi-trash"></i> Xóa tất cả
+            </button>
+        </div>
+        <div class="notif-list" id="notifList">
+            @if (!Model.Items.Any())
+            {
+                <div class="notif-empty" id="notifEmpty">
+                    <i class="bi bi-bell-slash"></i>
+                    <div>Chưa có thông báo nào</div>
+                </div>
+            }
+            else
+            {
+                @foreach (var n in Model.Items)
+                {
+                    <div class="notif-item @(n.IsRead ? "" : "unread")" data-id="@n.Id">
+                        <span class="notif-dot @DotClass(n.Type)"></span>
+                        <div class="notif-body">
+                            <div class="notif-msg">
+                                @if (!string.IsNullOrEmpty(n.LinkUrl))
+                                {
+                                    <a href="@n.LinkUrl" style="text-decoration:none; color:inherit;">@n.Message</a>
+                                }
+                                else
+                                {
+                                    @n.Message
+                                }
+                            </div>
+                            <div class="notif-time">@n.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                        <button type="button" class="notif-del" title="Xóa" onclick="delNotif(event, @n.Id, this)">&times;</button>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .notif-wrap { position: relative; }
+    .notif-bell {
+        position: relative;
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        color: var(--text-2);
+        font-size: 18px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all .15s;
+    }
+    .notif-bell:hover { color: var(--primary); border-color: var(--primary); }
+    .notif-badge {
+        position: absolute; top: -6px; right: -6px;
+        min-width: 18px; height: 18px; padding: 0 5px;
+        background: #EF4444; color: #fff;
+        font-size: 11px; font-weight: 700; line-height: 18px;
+        border-radius: 9px; text-align: center;
+        box-shadow: 0 0 0 2px var(--surface-1, #fff);
+    }
+    .notif-panel {
+        position: absolute; top: 46px; right: 0;
+        width: 340px; max-height: 60vh;
+        background: var(--surface-1, #fff);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 12px 32px rgba(0,0,0,.18);
+        overflow: hidden;
+        display: none;
+        z-index: 1000;
+        flex-direction: column;
+    }
+    .notif-panel.open { display: flex; }
+    .notif-panel-head {
+        padding: 10px 16px;
+        font-size: 14px; font-weight: 700; color: var(--text-1);
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .notif-clear {
+        background: none; border: none; color: var(--text-3);
+        font-size: 11.5px; font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; gap: 4px;
+        padding: 3px 8px; border-radius: 6px; transition: all .12s;
+    }
+    .notif-clear:hover { color: #EF4444; background: rgba(239,68,68,.08); }
+    .notif-list { overflow-y: auto; }
+    .notif-item {
+        display: flex; gap: 10px; align-items: flex-start;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+    }
+    .notif-item.unread { background: rgba(99,102,241,.06); }
+    .notif-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .nt-success { background: #10B981; }
+    .nt-info    { background: #6366F1; }
+    .nt-warning { background: #F59E0B; }
+    .nt-error   { background: #EF4444; }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-msg  { font-size: 13px; color: var(--text-1); line-height: 1.5; }
+    .notif-time { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+    .notif-del {
+        align-self: center; flex-shrink: 0;
+        background: none; border: none; color: var(--text-3);
+        font-size: 20px; line-height: 1; cursor: pointer;
+        padding: 0 4px; border-radius: 6px;
+        opacity: 0; transition: opacity .12s, color .12s;
+    }
+    .notif-item:hover .notif-del { opacity: 1; }
+    .notif-del:hover { color: #EF4444; }
+    .notif-empty {
+        padding: 32px 16px; text-align: center; color: var(--text-3);
+    }
+    .notif-empty i { font-size: 28px; display: block; margin-bottom: 8px; }
+</style>

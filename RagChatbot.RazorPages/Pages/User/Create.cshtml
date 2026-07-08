@@ -1,0 +1,99 @@
+@page
+@model RagChatbot.RazorPages.Pages.User.CreateModel
+@{
+    ViewData["Title"] = "Thêm Tài khoản";
+}
+
+<div class="breadcrumb-app">
+    <a asp-page="Index"><i class="bi bi-people me-1"></i>Tài khoản</a>
+    <span class="sep"><i class="bi bi-chevron-right" style="font-size:10px"></i></span>
+    <span class="current">Thêm mới</span>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="form-card fade-in-up">
+            <div style="margin-bottom:24px">
+                <h4 style="font-size:18px;font-weight:700;color:var(--text-1);margin:0">Thêm tài khoản mới</h4>
+                <p style="font-size:13px;color:var(--text-2);margin:4px 0 0">Điền đầy đủ thông tin để tạo tài khoản</p>
+            </div>
+
+            <form method="post">
+
+                <div style="margin-bottom:16px">
+                    <label asp-for="Input.FullName" class="form-label-app">Họ và tên</label>
+                    <input asp-for="Input.FullName" class="form-control-app" placeholder="VD: Nguyễn Văn A" />
+                    <span asp-validation-for="Input.FullName" class="field-error"></span>
+                </div>
+
+                <div style="margin-bottom:16px">
+                    <label asp-for="Input.Username" class="form-label-app">Tên đăng nhập</label>
+                    <input asp-for="Input.Username" class="form-control-app" placeholder="VD: nguyenvana" />
+                    <span asp-validation-for="Input.Username" class="field-error"></span>
+                </div>
+
+                <div style="margin-bottom:16px">
+                    <label asp-for="Input.Password" class="form-label-app">Mật khẩu</label>
+                    <input asp-for="Input.Password" type="password" class="form-control-app" placeholder="Nhập mật khẩu" />
+                    <span asp-validation-for="Input.Password" class="field-error"></span>
+                </div>
+
+                <div style="margin-bottom:16px">
+                    <label asp-for="Input.Role" class="form-label-app">Vai trò</label>
+                    <select asp-for="Input.Role" class="form-control-app">
+                        <option value="">— Chọn vai trò —</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Lecturer">Giảng viên</option>
+                        <option value="Student">Sinh viên</option>
+                    </select>
+                    <span asp-validation-for="Input.Role" class="field-error"></span>
+                </div>
+
+                <!-- Email (bắt buộc) -->
+                <div style="margin-bottom:24px">
+                    <label asp-for="Input.Email" class="form-label-app">Gmail người dùng</label>
+                    <div style="position:relative">
+                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:16px;pointer-events:none">
+                            <i class="bi bi-envelope"></i>
+                        </span>
+                        <input asp-for="Input.Email" type="email" class="form-control-app"
+                               style="padding-left:38px"
+                               placeholder="VD: nguyenvana@gmail.com" />
+                    </div>
+                    <span asp-validation-for="Input.Email" class="field-error"></span>
+                    <div class="email-hint">
+                        <i class="bi bi-send-check"></i>
+                        Hệ thống sẽ tự động gửi thông tin tài khoản & mật khẩu đến Gmail này.
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:10px">
+                    <button type="submit" class="btn-app btn-primary-app">
+                        <i class="bi bi-person-plus"></i> Tạo tài khoản
+                    </button>
+                    <a asp-page="Index" class="btn-app btn-ghost">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+.email-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-3);
+    padding: 8px 12px;
+    background: rgba(99,102,241,.06);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+.email-hint i { color: var(--primary); flex-shrink: 0; }
+</style>
+}

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — EduChatbot</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+
+@{
+    var role     = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    var username = User.Identity?.Name ?? "";
+    var fullName = User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value ?? username;
+    var initials = fullName.Length > 0 ? fullName.Substring(0, 1).ToUpper() : "?";
+    var pageTitle = ViewData["Title"]?.ToString() ?? "EduChatbot";
+
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    bool IsArea(string area) => currentPage.StartsWith("/" + area, StringComparison.OrdinalIgnoreCase);
+
+    string roleBadgeClass = role switch {
+        "Admin"    => "badge-admin",
+        "Lecturer" => "badge-lecturer",
+        _          => "badge-student"
+    };
+    string roleLabel = role switch {
+        "Admin"    => "Quản trị viên",
+        "Lecturer" => "Giảng viên",
+        _          => "Sinh viên"
+    };
+}
+
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="app-sidebar" id="appSidebar">
+    <a class="sidebar-brand" asp-page="/Home/Index">
+        <div class="sidebar-brand-icon">🎓</div>
+        <div>
+            <div class="sidebar-brand-text">EduChatbot</div>
+            <span class="sidebar-brand-sub">AI-Powered Learning</span>
+        </div>
+    </a>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section">Menu</div>
+
+        <a class="nav-item-link @(IsArea("Home") ? "active" : "")"
+           asp-page="/Home/Index">
+            <i class="bi bi-house-door"></i> Tổng quan
+        </a>
+
+        <a class="nav-item-link @(IsArea("Subject") ? "active" : "")"
+           asp-page="/Subject/Index">
+            <i class="bi bi-book"></i> Môn học
+        </a>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="sidebar-section">Quản trị</div>
+            <a class="nav-item-link @(IsArea("User") ? "active" : "")"
+               asp-page="/User/Index">
+                <i class="bi bi-people"></i> Tài khoản
+            </a>
+        }
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-avatar">@initials</div>
+            <div>
+                <div class="sidebar-user-name">@fullName</div>
+                <div class="sidebar-user-role">@roleLabel</div>
+            </div>
+        </div>
+        <a href="@Url.Page("/Account/Logout")" class="btn-logout">
+            <i class="bi bi-box-arrow-right"></i> Đăng xuất
+        </a>
+    </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="app-main">
+    <header class="app-topbar">
+        <div class="d-flex align-items-center gap-3">
+            <button class="sidebar-toggle" style="display:none" onclick="openSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <span class="topbar-title">@pageTitle</span>
+        </div>
+        <div class="topbar-right">
+            @await Component.InvokeAsync("NotificationBell")
+            <span class="topbar-badge @roleBadgeClass">
+                <i class="bi bi-shield-check"></i> @roleLabel
+            </span>
+        </div>
+    </header>
+
+    <main class="page-content">
+        @RenderBody()
+    </main>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function openSidebar() {
+        document.getElementById('appSidebar').classList.add('open');
+        document.getElementById('sidebarOverlay').classList.add('show');
+    }
+    function closeSidebar() {
+        document.getElementById('appSidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+    }
+
+    // ── Toast notifications (TempData từ PageModel) ──────────────────────────
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <text>
+        Swal.fire({
+            toast: true, position: 'top-end', icon: 'success',
+            title: @Json.Serialize(TempData["SuccessMessage"].ToString()),
+            showConfirmButton: false, timer: 4000, timerProgressBar: true,
+            customClass: { popup: 'swal-toast-custom' }
+        });
+        </text>
+    }
+    @if (TempData["WarningMessage"] != null)
+    {
+        <text>
+        Swal.fire({
+            toast: true, position: 'top-end', icon: 'warning',
+            title: @Json.Serialize(TempData["WarningMessage"].ToString()),
+            showConfirmButton: false, timer: 5000, timerProgressBar: true,
+            customClass: { popup: 'swal-toast-custom' }
+        });
+        </text>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <text>
+        Swal.fire({
+            toast: true, position: 'top-end', icon: 'error',
+            title: @Json.Serialize(TempData["ErrorMessage"].ToString()),
+            showConfirmButton: false, timer: 5000, timerProgressBar: true,
+            customClass: { popup: 'swal-toast-custom' }
+        });
+        </text>
+    }
+
+    function swalDelete(btn, title, message) {
+        Swal.fire({
+            title: title,
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            cancelButtonColor:  '#6B7280',
+            confirmButtonText:  '<i class="bi bi-trash me-1"></i> Xóa',
+            cancelButtonText:   'Hủy bỏ',
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                popup:         'swal-popup-custom',
+                confirmButton: 'swal-btn-confirm',
+                cancelButton:  'swal-btn-cancel',
+            }
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                btn.closest('form').submit();
+            }
+        });
+    }
+</script>
+
+<style>
+    .swal-popup-custom { font-family: 'Inter', sans-serif !important; border-radius: 16px !important; }
+    .swal2-title { font-size: 18px !important; font-weight: 700 !important; }
+    .swal2-html-container { font-size: 14px !important; }
+    .swal-btn-confirm, .swal-btn-cancel { border-radius: 8px !important; font-size: 13px !important; font-weight: 600 !important; padding: 10px 20px !important; }
+    .swal-toast-custom { font-family: 'Inter', sans-serif !important; font-size: 14px !important; font-weight: 500 !important; }
+</style>
+
+@* SignalR: nạp một lần cho mọi trang đã đăng nhập (các trang con dùng lại global signalR) *@
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+    <script>
+        // ── Kết nối hub thông báo chung ──────────────────────────────────────
+        let notifyConn = null;
+        (function () {
+            notifyConn = new signalR.HubConnectionBuilder()
+                .withUrl('/notificationHub')
+                .withAutomaticReconnect()
+                .build();
+            notifyConn.on('ReceiveNotification', function (n) {
+                // 1. Toast nổi ngay
+                Swal.fire({
+                    toast: true, position: 'top-end',
+                    icon: n.type || 'info',
+                    title: n.message,
+                    showConfirmButton: false, timer: 6000, timerProgressBar: true,
+                    customClass: { popup: 'swal-toast-custom' }
+                });
+                // 2. Cập nhật chuông
+                prependNotif(n.message, n.type, 'Vừa xong', n.id, n.linkUrl);
+                setBadge(n.unreadCount);
+            });
+            // Bị buộc đăng xuất (đổi quyền / xóa tài khoản) → đăng xuất ngay
+            notifyConn.on('ForceLogout', function () {
+                window.location.href = '/Account/Logout?forced=1';
+            });
+            notifyConn.start().catch(function () { });
+        })();
+
+        function setBadge(count) {
+            const b = document.getElementById('notifBadge');
+            if (!b) return;
+            if (count > 0) { b.textContent = count > 99 ? '99+' : count; b.style.display = ''; }
+            else { b.style.display = 'none'; }
+        }
+        function notifDotClass(t) {
+            return t === 'success' ? 'nt-success' : t === 'warning' ? 'nt-warning' : t === 'error' ? 'nt-error' : 'nt-info';
+        }
+        function ensureEmptyState() {
+            const list = document.getElementById('notifList');
+            if (list && list.querySelectorAll('.notif-item').length === 0 && !document.getElementById('notifEmpty')) {
+                const e = document.createElement('div');
+                e.className = 'notif-empty'; e.id = 'notifEmpty';
+                e.innerHTML = '<i class="bi bi-bell-slash"></i><div>Chưa có thông báo nào</div>';
+                list.appendChild(e);
+            }
+        }
+
+        function prependNotif(message, type, timeText, id, linkUrl) {
+            const list = document.getElementById('notifList');
+            if (!list) return;
+            const empty = document.getElementById('notifEmpty');
+            if (empty) empty.remove();
+
+            const item = document.createElement('div');
+            item.className = 'notif-item unread';
+            if (id != null) item.setAttribute('data-id', id);
+
+            const dot = document.createElement('span');
+            dot.className = 'notif-dot ' + notifDotClass(type);
+
+            const body = document.createElement('div');
+            body.className = 'notif-body';
+            const msg = document.createElement('div');
+            msg.className = 'notif-msg';
+            if (linkUrl) {
+                const a = document.createElement('a');
+                a.href = linkUrl;
+                a.style.textDecoration = 'none';
+                a.style.color = 'inherit';
+                a.textContent = message;
+                msg.appendChild(a);
+            } else {
+                msg.textContent = message;
+            }
+            const time = document.createElement('div');
+            time.className = 'notif-time';
+            time.textContent = timeText;
+            body.appendChild(msg); body.appendChild(time);
+
+            const del = document.createElement('button');
+            del.type = 'button'; del.className = 'notif-del'; del.title = 'Xóa';
+            del.innerHTML = '&times;';
+            del.onclick = function (e) { delNotif(e, id, del); };
+
+            item.appendChild(dot); item.appendChild(body); item.appendChild(del);
+            list.prepend(item);
+        }
+
+        // Xóa 1 thông báo
+        window.delNotif = function (e, id, btn) {
+            e.stopPropagation();
+            if (id != null && notifyConn) notifyConn.invoke('DeleteNotification', id).catch(function () { });
+            const item = btn.closest('.notif-item');
+            if (item) item.remove();
+            ensureEmptyState();
+        };
+
+        // Xóa tất cả thông báo
+        window.clearAllNotif = function (e) {
+            e.stopPropagation();
+            if (notifyConn) notifyConn.invoke('ClearAll').catch(function () { });
+            const list = document.getElementById('notifList');
+            if (list) list.querySelectorAll('.notif-item').forEach(function (el) { el.remove(); });
+            setBadge(0);
+            ensureEmptyState();
+        };
+
+        // Mở/đóng chuông; khi mở thì đánh dấu tất cả là đã đọc
+        window.toggleNotif = function (e) {
+            e.stopPropagation();
+            const panel = document.getElementById('notifPanel');
+            const willOpen = !panel.classList.contains('open');
+            panel.classList.toggle('open');
+            if (willOpen) {
+                if (notifyConn) notifyConn.invoke('MarkAllRead').catch(function () { });
+                setBadge(0);
+                document.querySelectorAll('#notifList .notif-item.unread')
+                        .forEach(function (el) { el.classList.remove('unread'); });
+            }
+        };
+        // Click ra ngoài thì đóng panel
+        document.addEventListener('click', function (e) {
+            const wrap = document.querySelector('.notif-wrap');
+            const panel = document.getElementById('notifPanel');
+            if (panel && panel.classList.contains('open') && wrap && !wrap.contains(e.target)) {
+                panel.classList.remove('open');
+            }
+        });
+
+        // ── Kết nối dashboard (presence toàn app) ──
+        // Broadcast của Admin được gửi qua chuông (ReceiveNotification) nên hiện
+        // cả ở toast lẫn danh sách chuông, và lưu DB cho người offline.
+        window.dashConn = new signalR.HubConnectionBuilder()
+            .withUrl('/dashboardHub')
+            .withAutomaticReconnect()
+            .build();
+        window.dashConn.start().catch(function () { });
+    </script>
+}
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

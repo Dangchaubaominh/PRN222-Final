@@ -1,0 +1,398 @@
+@page
+@model RagChatbot.RazorPages.Pages.Chat.IndexModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Chat AI";
+}
+
+<div class="chat-wrapper fade-in-up">
+    <div class="chat-header">
+        <div class="chat-avatar">AI</div>
+        <div>
+            <div class="chat-title">Trợ lý AI - RAG Chatbot</div>
+            <div class="chat-subtitle" id="chatStatus">Đang kết nối real-time...</div>
+        </div>
+        <div style="margin-left:auto">
+            <a href="@Url.Page("/Subject/Index")" class="btn-app btn-sm-app"
+               style="background:rgba(255,255,255,.15);color:#fff;gap:4px">
+                <i class="bi bi-arrow-left"></i> Trở về
+            </a>
+        </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        @if (!Model.History.Any())
+        {
+            <div class="msg-row ai">
+                <div class="msg-avatar ai"><i class="bi bi-robot"></i></div>
+                <div class="msg-bubble ai">
+                    <strong>Xin chào!</strong><br />
+                    Tôi là trợ lý AI đã được học từ tài liệu của môn học này.
+                    Bạn có thể hỏi tôi bất cứ điều gì liên quan đến nội dung tài liệu.
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var m in Model.History)
+            {
+                if (m.Sender == "assistant")
+                {
+                    <div class="msg-row ai" data-msg-id="@m.Id">
+                        <div class="msg-avatar ai"><i class="bi bi-robot"></i></div>
+                        <div class="msg-bubble ai md-render" data-sources="@JsonSerializer.Serialize(m.Sources)">@m.Content</div>
+                        <div class="msg-feedback">
+                            <button class="feedback-btn @(m.Feedback == RagChatbot.DAL.Entities.FeedbackType.Upvote ? "active" : "")" onclick="submitFeedback(@m.Id, 1)" title="Hữu ích"><i class="bi bi-hand-thumbs-up"></i></button>
+                            <button class="feedback-btn @(m.Feedback == RagChatbot.DAL.Entities.FeedbackType.Downvote ? "active" : "")" onclick="submitFeedback(@m.Id, -1)" title="Không hữu ích"><i class="bi bi-hand-thumbs-down"></i></button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="msg-row user">
+                        <div class="msg-avatar user"><i class="bi bi-person-fill"></i></div>
+                        <div class="msg-bubble user"><span style="white-space:pre-wrap">@m.Content</span></div>
+                    </div>
+                }
+            }
+        }
+    </div>
+
+    <div class="chat-input-area">
+        <input type="hidden" id="SubjectId" value="@Model.SubjectId" />
+        <input type="text" id="userInput" class="chat-input"
+               placeholder="Nhập câu hỏi của bạn..." autocomplete="off" disabled />
+        <button class="chat-send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+            <i class="bi bi-send-fill" style="font-size:16px"></i>
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<style>
+    .msg-bubble.ai p:first-child { margin-top: 0; }
+    .msg-bubble.ai p:last-child { margin-bottom: 0; }
+    .msg-bubble.ai pre { background: rgba(0,0,0,.06); padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
+    .msg-bubble.ai code { font-family: 'Consolas','Courier New',monospace; font-size: 13px; }
+    .msg-bubble.ai ul, .msg-bubble.ai ol { margin: 6px 0; padding-left: 20px; }
+    .msg-bubble.ai blockquote {
+        margin: 6px 0 0; padding: 0 0 0 10px; border-left: 3px solid rgba(99,102,241,.35);
+        color: var(--text-3);
+    }
+    .msg-sources {
+        margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);
+        font-size: 12px; color: var(--text-3);
+    }
+    .msg-sources-title {
+        display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+        color: var(--text-2); font-weight: 700;
+    }
+    .source-list { display: grid; gap: 6px; }
+    .source-item {
+        padding: 7px 8px; border: 1px solid rgba(99,102,241,.16);
+        border-radius: 8px; background: rgba(99,102,241,.06);
+    }
+    .source-meta {
+        display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+        color: var(--text-2); font-weight: 600;
+    }
+    .source-number {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
+        background: rgba(99,102,241,.14); color: var(--primary);
+        font-size: 11px; font-weight: 800;
+    }
+    .source-file { overflow-wrap: anywhere; }
+    .source-location { color: var(--text-3); font-weight: 500; }
+    .source-snippet {
+        margin-top: 5px; line-height: 1.45; color: var(--text-3);
+        overflow-wrap: anywhere;
+    }
+    .msg-feedback {
+        display: flex; gap: 4px; align-items: center; margin-top: 4px; padding-left: 10px;
+    }
+    .feedback-btn {
+        background: transparent; border: none; color: var(--text-3); font-size: 14px;
+        cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: all .2s;
+    }
+    .feedback-btn:hover { background: rgba(99,102,241,.1); color: var(--primary); }
+    .feedback-btn.active { color: var(--primary); }
+    .feedback-btn.active i::before { content: "\f40f"; /* hand-thumbs-up-fill or similar if bi-hand-thumbs-up */ }
+    .feedback-btn[title="Không hữu ích"].active i::before { content: "\f409"; } /* down-fill */
+</style>
+<script>
+    const messagesEl = document.getElementById('chatMessages');
+    const inputEl    = document.getElementById('userInput');
+    const sendBtn    = document.getElementById('sendBtn');
+    const statusEl   = document.getElementById('chatStatus');
+    const subjectId  = document.getElementById('SubjectId').value;
+
+    function mdSafe(text) {
+        return DOMPurify.sanitize(marked.parse(text || ''));
+    }
+
+    document.querySelectorAll('.msg-bubble.md-render').forEach(el => {
+        const sources = parseSources(el.dataset.sources);
+        el.innerHTML = mdSafe(el.textContent);
+        appendSources(el, sources);
+    });
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    let loadingId    = null;
+    let streamBubble = null;
+    let streamRaw    = '';
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl('/chatHub')
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on('BotTyping', () => {
+        if (loadingId || streamBubble) return;
+        loadingId = 'loading-' + Date.now();
+        appendHtml('Đang tìm kiếm trong tài liệu<span class="typing-dots"></span>', 'ai', loadingId);
+    });
+
+    connection.on('ReceiveChunk', delta => {
+        if (!streamBubble) { removeLoading(); streamBubble = startStreamBubble(); streamRaw = ''; }
+        streamRaw += delta;
+        streamBubble.innerHTML = mdSafe(streamRaw);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    });
+
+    connection.on('ReceiveSources', sources => {
+        if (!streamBubble || !sources || !sources.length) return;
+        appendSources(streamBubble, sources);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    });
+
+    function appendSources(bubble, sources) {
+        if (!bubble || !sources || !sources.length) return;
+
+        const foot = document.createElement('div');
+        foot.className = 'msg-sources';
+
+        const title = document.createElement('div');
+        title.className = 'msg-sources-title';
+        title.innerHTML = '<i class="bi bi-journal-text"></i><span>Nguồn tham khảo</span>';
+        foot.appendChild(title);
+
+        const list = document.createElement('div');
+        list.className = 'source-list';
+        sources.forEach((source, index) => list.appendChild(createSourceItem(source, index)));
+        foot.appendChild(list);
+
+        bubble.appendChild(foot);
+    }
+
+    function parseSources(json) {
+        if (!json) return [];
+
+        try {
+            const parsed = JSON.parse(json);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+
+    connection.on('ReceiveMessageId', msgId => {
+        if (streamBubble && streamBubble.parentElement) {
+            const row = streamBubble.parentElement;
+            row.setAttribute('data-msg-id', msgId);
+            
+            const feedbackHtml = `
+                <div class="msg-feedback">
+                    <button class="feedback-btn" onclick="submitFeedback(${msgId}, 1)" title="Hữu ích"><i class="bi bi-hand-thumbs-up"></i></button>
+                    <button class="feedback-btn" onclick="submitFeedback(${msgId}, -1)" title="Không hữu ích"><i class="bi bi-hand-thumbs-down"></i></button>
+                </div>
+            `;
+            row.insertAdjacentHTML('beforeend', feedbackHtml);
+        }
+    });
+
+    connection.on('FeedbackReceived', (msgId, type) => {
+        const row = document.querySelector(`.msg-row.ai[data-msg-id="${msgId}"]`);
+        if (!row) return;
+        const btns = row.querySelectorAll('.feedback-btn');
+        btns[0].classList.toggle('active', type === 1);
+        btns[1].classList.toggle('active', type === -1);
+        
+        if (type === 1) {
+            btns[0].querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
+            btns[1].querySelector('i').className = 'bi bi-hand-thumbs-down';
+        } else if (type === -1) {
+            btns[0].querySelector('i').className = 'bi bi-hand-thumbs-up';
+            btns[1].querySelector('i').className = 'bi-hand-thumbs-down-fill';
+        } else {
+            btns[0].querySelector('i').className = 'bi bi-hand-thumbs-up';
+            btns[1].querySelector('i').className = 'bi bi-hand-thumbs-down';
+        }
+    });
+
+    window.submitFeedback = function(msgId, type) {
+        const row = document.querySelector(`.msg-row.ai[data-msg-id="${msgId}"]`);
+        if (!row) return;
+        
+        // check if already active, toggle off
+        const btns = row.querySelectorAll('.feedback-btn');
+        const isActive = (type === 1 && btns[0].classList.contains('active')) || (type === -1 && btns[1].classList.contains('active'));
+        const finalType = isActive ? null : type;
+        
+        connection.invoke('SubmitFeedback', msgId, finalType).catch(err => console.error(err));
+    };
+
+    connection.on('ReceiveDone', () => { streamBubble = null; unlockInput(); });
+
+    connection.on('ReceiveError', msg => {
+        removeLoading();
+        streamBubble = null;
+        appendHtml('<span style="white-space:pre-wrap"></span>', 'ai', null, msg);
+        unlockInput();
+    });
+
+    connection.onreconnecting(() => { statusEl.textContent = 'Đang kết nối lại...'; lockInput(); });
+    connection.onreconnected(()  => { statusEl.textContent = 'Đã sẵn sàng trả lời dựa trên tài liệu môn học'; unlockInput(); });
+    connection.onclose(()        => { statusEl.textContent = 'Mất kết nối - hãy tải lại trang.'; lockInput(); });
+
+    connection.start()
+        .then(() => {
+            statusEl.textContent = 'Đã sẵn sàng trả lời dựa trên tài liệu môn học';
+            unlockInput();
+            inputEl.focus();
+        })
+        .catch(() => { statusEl.textContent = 'Không kết nối được máy chủ real-time.'; });
+
+    inputEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    function sendMessage() {
+        const text = inputEl.value.trim();
+        if (!text || sendBtn.disabled) return;
+        appendUserMsg(text);
+        inputEl.value = '';
+        streamBubble = null;
+        lockInput();
+        connection.invoke('StreamMessage', subjectId, text)
+            .catch(() => {
+                removeLoading(); streamBubble = null;
+                appendHtml('', 'ai', null, 'Lỗi gửi câu hỏi đến máy chủ. Vui lòng thử lại.');
+                unlockInput();
+            });
+    }
+
+    function lockInput()   { sendBtn.disabled = true;  inputEl.disabled = true; }
+    function unlockInput() { sendBtn.disabled = false; inputEl.disabled = false; inputEl.focus(); }
+    function removeLoading() {
+        if (loadingId) { document.getElementById(loadingId)?.remove(); loadingId = null; }
+    }
+
+    function startStreamBubble() {
+        const row = document.createElement('div');
+        row.className = 'msg-row ai';
+        row.innerHTML = '<div class="msg-avatar ai"><i class="bi bi-robot"></i></div>';
+        const bubble = document.createElement('div');
+        bubble.className = 'msg-bubble ai';
+        row.appendChild(bubble);
+        messagesEl.appendChild(row);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        return bubble;
+    }
+
+    function appendUserMsg(text) {
+        const row = document.createElement('div');
+        row.className = 'msg-row user';
+        row.innerHTML = '<div class="msg-avatar user"><i class="bi bi-person-fill"></i></div>';
+        const bubble = document.createElement('div');
+        bubble.className = 'msg-bubble user';
+        const span = document.createElement('span');
+        span.style.whiteSpace = 'pre-wrap';
+        span.textContent = text;
+        bubble.appendChild(span);
+        row.appendChild(bubble);
+        messagesEl.appendChild(row);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function appendHtml(html, type, id, textContent) {
+        const row = document.createElement('div');
+        row.className = 'msg-row ' + type;
+        if (id) row.id = id;
+        const avatar = document.createElement('div');
+        avatar.className = 'msg-avatar ' + type;
+        avatar.innerHTML = type === 'ai' ? '<i class="bi bi-robot"></i>' : '<i class="bi bi-person-fill"></i>';
+        const bubble = document.createElement('div');
+        bubble.className = 'msg-bubble ' + type;
+        if (textContent !== undefined) {
+            const span = document.createElement('span');
+            span.style.whiteSpace = 'pre-wrap';
+            span.textContent = textContent;
+            bubble.appendChild(span);
+        } else {
+            bubble.innerHTML = html;
+        }
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        messagesEl.appendChild(row);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function normalizeSource(source) {
+        if (typeof source === 'string') {
+            return { fileName: source, pageNumber: null, chunkIndex: null, snippet: '' };
+        }
+
+        return {
+            fileName: source.fileName || source.FileName || 'Unknown document',
+            pageNumber: source.pageNumber ?? source.PageNumber ?? null,
+            chunkIndex: source.chunkIndex ?? source.ChunkIndex ?? null,
+            snippet: source.snippet || source.Snippet || ''
+        };
+    }
+
+    function createSourceItem(rawSource, index) {
+        const source = normalizeSource(rawSource);
+        const item = document.createElement('div');
+        item.className = 'source-item';
+
+        const meta = document.createElement('div');
+        meta.className = 'source-meta';
+
+        const number = document.createElement('span');
+        number.className = 'source-number';
+        number.textContent = index + 1;
+
+        const file = document.createElement('span');
+        file.className = 'source-file';
+        file.textContent = source.fileName;
+
+        meta.appendChild(number);
+        meta.appendChild(file);
+
+        const location = [];
+        if (source.pageNumber) location.push('trang ' + source.pageNumber);
+        if (source.chunkIndex) location.push('đoạn ' + source.chunkIndex);
+
+        if (location.length) {
+            const locationEl = document.createElement('span');
+            locationEl.className = 'source-location';
+            locationEl.textContent = '(' + location.join(', ') + ')';
+            meta.appendChild(locationEl);
+        }
+
+        item.appendChild(meta);
+
+        if (source.snippet) {
+            const snippet = document.createElement('div');
+            snippet.className = 'source-snippet';
+            snippet.textContent = source.snippet;
+            item.appendChild(snippet);
+        }
+
+        return item;
+    }
+</script>
+}

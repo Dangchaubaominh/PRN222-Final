@@ -1,0 +1,171 @@
+@page
+@model RagChatbot.RazorPages.Pages.Home.IndexModel
+@{
+    ViewData["Title"] = "Tổng quan";
+    var fullName = User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value
+                ?? User.Identity?.Name ?? "";
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+}
+
+<div class="welcome-banner fade-in-up">
+    <h1 class="welcome-title">Xin chào, @fullName! 👋</h1>
+    <p class="welcome-sub">Chào mừng bạn quay lại EduChatbot — nền tảng học tập thông minh được hỗ trợ bởi AI.</p>
+</div>
+
+<div class="row g-4 mb-4 fade-in-up">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon indigo"><i class="bi bi-book"></i></div>
+            <div class="stat-value" id="statSubjects">@Model.SubjectCount</div>
+            <div class="stat-label">Môn học</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="stat-value" id="statDocuments">@Model.DocumentCount</div>
+            <div class="stat-label">Tài liệu</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-broadcast"></i></div>
+            <div class="stat-value"><span id="statOnline">@Model.OnlineCount</span> <span class="online-dot"></span></div>
+            <div class="stat-label">Đang online</div>
+        </div>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon cyan"><i class="bi bi-people"></i></div>
+                <div class="stat-value" id="statUsers">@Model.UserCount</div>
+                <div class="stat-label">Tài khoản</div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon cyan"><i class="bi bi-robot"></i></div>
+                <div class="stat-value">AI</div>
+                <div class="stat-label">Trợ lý RAG thông minh</div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (User.IsInRole("Admin"))
+{
+    <div class="card mb-4 fade-in-up">
+        <div class="card-header-custom">
+            <h5><i class="bi bi-megaphone text-danger me-2"></i>Gửi thông báo tới mọi người</h5>
+        </div>
+        <div style="padding:18px 24px;display:flex;gap:10px;flex-wrap:wrap">
+            <input type="text" id="broadcastInput" class="form-control-app" style="flex:1;min-width:220px"
+                   placeholder="Nội dung thông báo gửi tới tất cả người đang online..." maxlength="500" />
+            <button type="button" class="btn-app btn-primary-app" id="broadcastBtn" onclick="sendBroadcast()">
+                <i class="bi bi-send"></i> Gửi broadcast
+            </button>
+        </div>
+    </div>
+}
+
+<div class="row g-4 fade-in-up">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-lightning-charge text-warning me-2"></i>Bắt đầu nhanh</h5>
+            </div>
+            <div style="padding: 20px 24px; display:flex; flex-direction:column; gap:10px;">
+                <a asp-page="/Subject/Index" class="btn-app btn-primary-app w-100" style="justify-content:center">
+                    <i class="bi bi-book"></i> Vào danh sách Môn học
+                </a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-page="/User/Index" class="btn-app btn-ghost w-100" style="justify-content:center">
+                        <i class="bi bi-people"></i> Quản lý Tài khoản
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-info-circle text-primary me-2"></i>Về hệ thống</h5>
+            </div>
+            <div style="padding: 20px 24px;">
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;">
+                        <span style="width:28px;height:28px;background:#EEF2FF;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#6366F1;font-size:14px;flex-shrink:0"><i class="bi bi-cpu"></i></span>
+                        <span>Sử dụng <strong>Gemini AI</strong> với công nghệ RAG</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;">
+                        <span style="width:28px;height:28px;background:#D1FAE5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#10B981;font-size:14px;flex-shrink:0"><i class="bi bi-shield-check"></i></span>
+                        <span>Phân quyền <strong>3 cấp</strong>: Admin, Giảng viên, Sinh viên</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;">
+                        <span style="width:28px;height:28px;background:#CFFAFE;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#06B6D4;font-size:14px;flex-shrink:0"><i class="bi bi-database"></i></span>
+                        <span>Lưu trữ vector trên <strong>PostgreSQL + pgvector</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+@* signalR client đã được nạp sẵn trong _Layout *@
+<style>
+    .online-dot { display:inline-block;width:9px;height:9px;border-radius:50%;background:#10B981;
+                  box-shadow:0 0 0 3px rgba(16,185,129,.2);vertical-align:middle;margin-left:2px;
+                  animation:pulseDot 1.6s infinite; }
+    @@keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .stat-bump { transition: color .2s; color: var(--primary) !important; }
+</style>
+<script>
+    const statsUrl = '@Url.Page("/Home/Index", "Stats")';
+    const isAdmin = @(User.IsInRole("Admin") ? "true" : "false");
+
+    // Dùng lại kết nối dashboard đã tạo trong _Layout
+    const dashConn = window.dashConn;
+
+    function setStat(id, value) {
+        const el = document.getElementById(id);
+        if (!el || el.textContent == value) return;
+        el.textContent = value;
+        el.classList.add('stat-bump');
+        setTimeout(() => el.classList.remove('stat-bump'), 600);
+    }
+
+    // Số người online thay đổi
+    dashConn.on('OnlineChanged', count => setStat('statOnline', count));
+
+    // Số liệu (môn/tài liệu/tài khoản) thay đổi → nạp lại
+    dashConn.on('StatsChanged', async () => {
+        try {
+            const res = await fetch(statsUrl);
+            if (!res.ok) return;
+            const s = await res.json();
+            setStat('statSubjects', s.subjects);
+            setStat('statDocuments', s.documents);
+            setStat('statOnline', s.online);
+            if (isAdmin) setStat('statUsers', s.users);
+        } catch { /* bỏ qua */ }
+    });
+
+    // (Toast Announcement do _Layout xử lý chung cho mọi trang)
+
+    // Admin gửi broadcast
+    window.sendBroadcast = function () {
+        const input = document.getElementById('broadcastInput');
+        const msg = input.value.trim();
+        if (!msg || !dashConn) return;
+        dashConn.invoke('Broadcast', msg).catch(() => {});
+        input.value = '';
+    };
+</script>
+}
