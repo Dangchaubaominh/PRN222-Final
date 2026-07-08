@@ -1,0 +1,183 @@
+@page
+@model RagChatbot.RazorPages.Pages.Document.IndexModel
+@{
+    var subject = Model.Subject;
+    ViewData["Title"] = "Tài liệu — " + subject?.Code;
+}
+
+<div class="breadcrumb-app">
+    <a asp-page="/Subject/Index"><i class="bi bi-book me-1"></i>Môn học</a>
+    <span class="sep"><i class="bi bi-chevron-right" style="font-size:10px"></i></span>
+    <span class="current">@subject?.Code — @subject?.Name</span>
+</div>
+
+<div class="page-header fade-in-up">
+    <div class="page-header-left">
+        <h1>Tài liệu</h1>
+        <p><span class="subject-code-badge">@subject?.Code</span> &nbsp;@subject?.Name</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        @if (User.IsInRole("Admin") || User.IsInRole("Lecturer"))
+        {
+            <a asp-page="Create" asp-route-subjectId="@subject?.Id" class="btn-app btn-success-app">
+                <i class="bi bi-upload"></i> Upload tài liệu
+            </a>
+        }
+        <a asp-page="Search" asp-route-subjectId="@subject?.Id" class="btn-app btn-primary-app">
+            <i class="bi bi-search"></i> Tìm kiếm tài liệu
+        </a>
+        <a asp-page="/Subject/Index" class="btn-app btn-ghost">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<input type="hidden" id="subjectId" value="@subject?.Id" />
+
+@if (!Model.Documents.Any())
+{
+    <div class="table-card">
+        <div class="empty-state">
+            <span class="empty-icon"><i class="bi bi-folder2-open"></i></span>
+            <div class="empty-title">Chưa có tài liệu nào</div>
+            <div class="empty-sub">
+                @if (User.IsInRole("Admin") || User.IsInRole("Lecturer"))
+                { <text>Hãy upload tài liệu đầu tiên để AI có thể học.</text> }
+                else
+                { <text>Môn học này chưa có tài liệu nào.</text> }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="table-card fade-in-up">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Tài liệu</th>
+                    <th style="width:160px;text-align:center">Trạng thái AI</th>
+                    <th style="width:150px;text-align:center">Ngày tải lên</th>
+                    <th style="width:160px;text-align:center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Documents)
+                {
+                    var ext = System.IO.Path.GetExtension(item.FileName).ToLower();
+                    var iconClass = ext == ".pdf" ? "pdf" : ext == ".txt" ? "txt" : ext == ".docx" ? "docx" : "other";
+                    var iconName = ext == ".pdf" ? "bi-file-earmark-pdf" : ext == ".txt" ? "bi-file-earmark-text" : ext == ".docx" ? "bi-file-earmark-word" : "bi-file-earmark";
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:12px">
+                                <div class="file-icon @iconClass"><i class="bi @iconName"></i></div>
+                                <div>
+                                    <a asp-page="ViewDoc" asp-route-id="@item.Id"
+                                       style="font-size:14px;font-weight:600;color:var(--text-1)">@item.FileName</a>
+                                    <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;margin-top:1px">@ext.TrimStart('.')</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align:center" data-status-cell="@item.Id">
+                            @if (item.Status == "Completed")
+                            {
+                                <span class="badge-app badge-success"><i class="bi bi-robot"></i> Đã học xong</span>
+                            }
+                            else if (item.Status == "Pending" || item.Status == "Processing")
+                            {
+                                <span class="badge-app badge-warning"><i class="bi bi-hourglass-split"></i> @(item.ProgressMessage ?? "Đang xử lý")</span>
+                            }
+                            else
+                            {
+                                <span class="badge-app badge-danger"><i class="bi bi-x-circle"></i> @(item.ProgressMessage ?? "Lỗi đọc file")</span>
+                            }
+                            
+                            @if (item.AccessLevel == 1)
+                            {
+                                <div style="font-size:11px; margin-top:4px; color:var(--text-3)"><i class="bi bi-lock-fill"></i> Riêng tư</div>
+                            }
+                            else if (item.AccessLevel == 2)
+                            {
+                                <div style="font-size:11px; margin-top:4px; color:var(--text-3)"><i class="bi bi-shield-lock-fill"></i> Nội bộ GV</div>
+                            }
+                        </td>
+                        <td style="text-align:center;font-size:12.5px;color:var(--text-2)">
+                            @item.UploadedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        </td>
+                        <td>
+                            <div style="display:flex;justify-content:center;gap:6px">
+                                <a asp-page="Download" asp-route-id="@item.Id" class="btn-app btn-sm-app btn-ghost" title="Tải về">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                @if (User.IsInRole("Admin") || User.IsInRole("Lecturer"))
+                                {
+                                    <form asp-page-handler="Delete" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="subjectId" value="@item.SubjectId" />
+                                        <button type="button" class="btn-app btn-sm-app btn-danger-app" title="Xoá"
+                                                onclick="swalDelete(this, 'Xoá tài liệu?', 'File &quot;@item.FileName&quot; sẽ bị xoá vĩnh viễn khỏi hệ thống.')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@section Scripts {
+@* signalR client đã được nạp sẵn trong _Layout *@
+<script>
+    const subjectId = document.getElementById('subjectId').value;
+
+    // HTML badge tương ứng từng trạng thái (khớp với badge render phía server)
+    function statusBadge(status) {
+        if (status === 'Completed')
+            return '<span class="badge-app badge-success"><i class="bi bi-robot"></i> Đã học xong</span>';
+        if (status === 'Pending' || status === 'Processing')
+            return '<span class="badge-app badge-warning"><i class="bi bi-hourglass-split"></i> Đang xử lý</span>';
+        return '<span class="badge-app badge-danger"><i class="bi bi-x-circle"></i> Lỗi đọc file</span>';
+    }
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl('/documentHub')
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on('DocumentStatusChanged', payload => {
+        const cell = document.querySelector('[data-status-cell="' + payload.documentId + '"]');
+        if (!cell) return;
+        cell.innerHTML = statusBadge(payload.status);
+        cell.style.transition = 'background-color .3s';
+        cell.style.backgroundColor = 'rgba(99,102,241,.12)';
+        setTimeout(() => { cell.style.backgroundColor = ''; }, 800);
+    });
+
+    connection.on('DocumentProgressChanged', payload => {
+        const cell = document.querySelector('[data-status-cell="' + payload.documentId + '"]');
+        if (!cell) return;
+        cell.innerHTML = '<span class="badge-app badge-warning"><i class="bi bi-hourglass-split"></i> ' + (payload.message || 'Đang xử lý') + '</span>';
+    });
+
+
+    let documentListReloadTimer = null;
+    connection.on('DocumentListChanged', payload => {
+        if (!payload || String(payload.subjectId).toLowerCase() !== subjectId.toLowerCase()) return;
+
+        clearTimeout(documentListReloadTimer);
+        documentListReloadTimer = setTimeout(() => {
+            window.location.reload();
+        }, 250);
+    });
+    function joinGroup() {
+        if (subjectId) connection.invoke('JoinSubject', subjectId).catch(() => {});
+    }
+
+    connection.onreconnected(joinGroup);
+    connection.start().then(joinGroup).catch(err => console.error('DocumentHub:', err));
+</script>
+}

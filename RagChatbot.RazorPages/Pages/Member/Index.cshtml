@@ -1,0 +1,59 @@
+@page
+@model RagChatbot.RazorPages.Pages.Member.IndexModel
+@{
+    var subject = Model.Subject;
+    ViewData["Title"] = "Thành viên — " + subject?.Code;
+}
+
+<div class="breadcrumb-app">
+    <a asp-page="/Subject/Index"><i class="bi bi-book me-1"></i>Môn học</a>
+    <span class="sep"><i class="bi bi-chevron-right" style="font-size:10px"></i></span>
+    <span class="current">Thành viên — @subject?.Code</span>
+</div>
+
+<div class="page-header fade-in-up">
+    <div class="page-header-left">
+        <h1>Thành viên môn học</h1>
+        <p><span class="subject-code-badge">@subject?.Code</span> &nbsp;@subject?.Name</p>
+    </div>
+    <div style="display:flex;gap:8px">
+        <a asp-page="Add" asp-route-subjectId="@subject?.Id" class="btn-app btn-success-app">
+            <i class="bi bi-person-plus"></i>
+            @(User.IsInRole("Admin") ? "Thêm thành viên" : "Thêm sinh viên")
+        </a>
+        <a asp-page="/Subject/Index" class="btn-app btn-ghost">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<div id="membersContainer">
+    <partial name="_MembersTable" model="Model" />
+</div>
+
+@section Scripts {
+@* signalR client đã được nạp sẵn trong _Layout *@
+<script>
+    const subjectId = '@subject?.Id';
+    const partialUrl = '@Url.Page("/Member/Index", "TablePartial", new { subjectId = subject?.Id })';
+
+    const memberConn = new signalR.HubConnectionBuilder()
+        .withUrl('/subjectHub')
+        .withAutomaticReconnect()
+        .build();
+
+    // Khi danh sách thành viên đổi → nạp lại phần bảng từ server (giữ đúng phân quyền)
+    memberConn.on('MembersChanged', async () => {
+        try {
+            const res = await fetch(partialUrl, { headers: { 'X-Requested-With': 'fetch' } });
+            if (res.ok) document.getElementById('membersContainer').innerHTML = await res.text();
+        } catch { /* bỏ qua lỗi mạng tạm thời */ }
+    });
+
+    function joinMembers() {
+        if (subjectId) memberConn.invoke('JoinMembers', subjectId).catch(() => {});
+    }
+    memberConn.onreconnected(joinMembers);
+    memberConn.start().then(joinMembers).catch(err => console.error('SubjectHub:', err));
+</script>
+}

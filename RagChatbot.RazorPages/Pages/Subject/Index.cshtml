@@ -1,0 +1,48 @@
+@page
+@model RagChatbot.RazorPages.Pages.Subject.IndexModel
+@{
+    ViewData["Title"] = "Môn học";
+}
+
+<div class="page-header fade-in-up">
+    <div class="page-header-left">
+        <h1>Danh sách Môn học</h1>
+        <p>@Model.Subjects.Count() môn học đang hiển thị</p>
+    </div>
+    @if (User.IsInRole("Admin") || User.IsInRole("Lecturer"))
+    {
+        <a asp-page="Create" class="btn-app btn-primary-app">
+            <i class="bi bi-plus-lg"></i> Thêm môn học
+        </a>
+    }
+</div>
+
+<div id="subjectsContainer">
+    <partial name="_SubjectCards" model="Model" />
+</div>
+
+@section Scripts {
+@* signalR client đã được nạp sẵn trong _Layout *@
+<script>
+    const cardsUrl = '@Url.Page("/Subject/Index", "CardsPartial")';
+
+    const subjectListConn = new signalR.HubConnectionBuilder()
+        .withUrl('/subjectHub')
+        .withAutomaticReconnect()
+        .build();
+
+    // Khi danh sách môn học đổi → nạp lại phần card từ server (giữ đúng phân quyền)
+    subjectListConn.on('SubjectListChanged', async () => {
+        try {
+            const res = await fetch(cardsUrl, { headers: { 'X-Requested-With': 'fetch' } });
+            if (res.ok) document.getElementById('subjectsContainer').innerHTML = await res.text();
+        } catch { /* bỏ qua lỗi mạng tạm thời */ }
+    });
+
+    function joinSubjectList() {
+        subjectListConn.invoke('JoinSubjectList').catch(() => {});
+    }
+    subjectListConn.onreconnected(joinSubjectList);
+    subjectListConn.start().then(joinSubjectList).catch(err => console.error('SubjectHub:', err));
+</script>
+}

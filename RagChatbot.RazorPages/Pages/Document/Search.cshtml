@@ -1,0 +1,68 @@
+@page
+@model RagChatbot.RazorPages.Pages.Document.SearchModel
+@{
+    var subject = Model.Subject;
+    ViewData["Title"] = "Tìm kiếm Semantic — " + subject?.Code;
+}
+
+<div class="breadcrumb-app">
+    <a asp-page="/Subject/Index"><i class="bi bi-book me-1"></i>Môn học</a>
+    <span class="sep"><i class="bi bi-chevron-right" style="font-size:10px"></i></span>
+    <a asp-page="/Subject/Index">@subject?.Code — @subject?.Name</a>
+    <span class="sep"><i class="bi bi-chevron-right" style="font-size:10px"></i></span>
+    <span class="current">Tìm kiếm tài liệu</span>
+</div>
+
+<div class="page-header fade-in-up">
+    <div class="page-header-left">
+        <h1>Tìm kiếm Semantic</h1>
+        <p>Hệ thống dùng AI để tìm đoạn văn bản có ý nghĩa tương tự câu hỏi của bạn thay vì chỉ khớp từ khóa.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a asp-page="Index" asp-route-subjectId="@subject?.Id" class="btn-app btn-ghost">
+            <i class="bi bi-arrow-left"></i> Về Danh sách tài liệu
+        </a>
+    </div>
+</div>
+
+<div class="form-card fade-in-up" style="margin-bottom:24px">
+    <form method="get">
+        <input type="hidden" name="SubjectId" value="@Model.SubjectId" />
+        <div style="display:flex; gap:12px;">
+            <input type="text" name="Query" value="@Model.Query" placeholder="Nhập từ khóa hoặc câu hỏi (VD: Công nghệ RAG là gì?)" class="form-control" style="flex:1" required />
+            <button type="submit" class="btn-app btn-primary-app">
+                <i class="bi bi-search"></i> Tìm kiếm
+            </button>
+        </div>
+    </form>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Query))
+{
+    if (!Model.Results.Any())
+    {
+        <div class="alert-app alert-warning-app fade-in-up">
+            <i class="bi bi-exclamation-triangle"></i>
+            <div>Không tìm thấy nội dung nào liên quan đến câu hỏi của bạn.</div>
+        </div>
+    }
+    else
+    {
+        <div class="fade-in-up" style="display:flex; flex-direction:column; gap:16px;">
+            @foreach(var item in Model.Results)
+            {
+                <div class="table-card" style="padding: 16px;">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">
+                        <i class="bi bi-file-earmark-text"></i> @item.Document.FileName 
+                        @if(item.PageNumber.HasValue) {
+                            <span style="color: var(--text-3); font-weight: 400;">(Trang @item.PageNumber)</span>
+                        }
+                    </div>
+                    <div style="font-size: 14px; line-height: 1.6; color: var(--text-1); background: var(--bg-2); padding: 12px; border-radius: 8px; border-left: 4px solid var(--primary);">
+                        @item.TextContent
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}

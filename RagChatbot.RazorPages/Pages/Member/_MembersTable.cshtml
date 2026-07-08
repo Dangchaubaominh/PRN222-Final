@@ -1,0 +1,65 @@
+@model RagChatbot.RazorPages.Pages.Member.IndexModel
+@{
+    var subject = Model.Subject;
+}
+
+@if (!Model.Members.Any())
+{
+    <div class="table-card">
+        <div class="empty-state">
+            <span class="empty-icon"><i class="bi bi-people"></i></span>
+            <div class="empty-title">Môn học chưa có thành viên</div>
+            <div class="empty-sub">Hãy thêm giảng viên hoặc sinh viên vào môn học này.</div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="table-card fade-in-up">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Họ tên</th>
+                    <th>Tên đăng nhập</th>
+                    <th>Vai trò</th>
+                    <th style="text-align:center;width:120px">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Members)
+                {
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px">
+                                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0">
+                                    @(item.FullName?.Length > 0 ? item.FullName.Substring(0,1).ToUpper() : "?")
+                                </div>
+                                <span style="font-weight:600">@item.FullName</span>
+                            </div>
+                        </td>
+                        <td style="color:var(--text-2);font-size:13px">@item.Username</td>
+                        <td>
+                            @if (item.Role == "Lecturer")
+                            { <span class="badge-app badge-purple"><i class="bi bi-mortarboard-fill"></i> Giảng viên</span> }
+                            else
+                            { <span class="badge-app badge-info"><i class="bi bi-person-fill"></i> Sinh viên</span> }
+                        </td>
+                        <td style="text-align:center">
+                            @if (User.IsInRole("Admin") || item.Role == "Student")
+                            {
+                                <form asp-page-handler="Remove" method="post" class="d-inline">
+                                    <input type="hidden" name="subjectId" value="@subject?.Id" />
+                                    <input type="hidden" name="userId" value="@item.Id" />
+                                    <button type="button" class="btn-app btn-sm-app btn-danger-app"
+                                            onclick="swalDelete(this, 'Xoá khỏi môn học?', '@item.FullName sẽ không còn truy cập vào môn học này.')">
+                                        <i class="bi bi-person-dash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

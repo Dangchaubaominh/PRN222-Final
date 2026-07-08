@@ -1,0 +1,62 @@
+@page "{id:int}"
+@model RagChatbot.RazorPages.Pages.Quiz.ResultModel
+@{
+    ViewData["Title"] = "Kết quả làm bài";
+    double percentage = Model.Result != null && Model.Result.TotalQuestions > 0 
+        ? Math.Round((double)Model.Result.Score / Model.Result.TotalQuestions * 100, 1) 
+        : 0;
+}
+
+<div class="container mt-4 mb-5">
+    @if (Model.Result != null)
+    {
+        <div class="card shadow border-0 mb-5 rounded-4 overflow-hidden">
+            <div class="card-body text-center p-5 @(percentage >= 80 ? "bg-success text-white" : (percentage >= 50 ? "bg-warning" : "bg-danger text-white"))">
+                <h1 class="display-4 fw-bold mb-3">@Model.Result.Score / @Model.Result.TotalQuestions</h1>
+                <h4 class="mb-0">Điểm số: @percentage%</h4>
+            </div>
+            <div class="card-footer bg-white text-center py-3">
+                <a asp-page="/Subject/Index" class="btn btn-outline-primary rounded-pill px-4"><i class="bi bi-arrow-left me-2"></i> Trở về danh sách môn học</a>
+            </div>
+        </div>
+
+        <h3 class="mb-4 fw-bold text-primary border-bottom pb-2">Xem lại đáp án & Giải thích</h3>
+        
+        int qIndex = 1;
+        foreach (var q in Model.QuizInfo.Questions)
+        {
+            <div class="card shadow-sm border-0 mb-4 rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-semibold mb-3">
+                        <span class="badge bg-secondary rounded-pill me-2">Câu @qIndex</span>
+                        @q.Content
+                    </h5>
+                    
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item @(q.CorrectOption == "A" ? "list-group-item-success fw-bold" : "")">
+                            A. @q.OptionA @(q.CorrectOption == "A" ? " <i class='bi bi-check-circle-fill text-success ms-2'></i>" : "")
+                        </li>
+                        <li class="list-group-item @(q.CorrectOption == "B" ? "list-group-item-success fw-bold" : "")">
+                            B. @q.OptionB @(q.CorrectOption == "B" ? " <i class='bi bi-check-circle-fill text-success ms-2'></i>" : "")
+                        </li>
+                        <li class="list-group-item @(q.CorrectOption == "C" ? "list-group-item-success fw-bold" : "")">
+                            C. @q.OptionC @(q.CorrectOption == "C" ? " <i class='bi bi-check-circle-fill text-success ms-2'></i>" : "")
+                        </li>
+                        <li class="list-group-item @(q.CorrectOption == "D" ? "list-group-item-success fw-bold" : "")">
+                            D. @q.OptionD @(q.CorrectOption == "D" ? " <i class='bi bi-check-circle-fill text-success ms-2'></i>" : "")
+                        </li>
+                    </ul>
+
+                    @if (!string.IsNullOrEmpty(q.Explanation))
+                    {
+                        <div class="alert alert-info border-0 rounded-3 mb-0">
+                            <strong><i class="bi bi-lightbulb-fill text-warning me-2"></i> Giải thích AI:</strong>
+                            <span class="ms-1">@q.Explanation</span>
+                        </div>
+                    }
+                </div>
+            </div>
+            qIndex++;
+        }
+    }
+</div>
