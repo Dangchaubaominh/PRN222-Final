@@ -22,7 +22,13 @@ namespace RagChatbot.BLL.Services.Implements
             _aiService = aiService;
         }
 
-        public async Task<ChatResult> AskAsync(Guid subjectId, string userMessage, int currentUserId, string currentUserRole, CancellationToken cancellationToken = default)
+        public async Task<ChatResult> AskAsync(
+            Guid subjectId,
+            string userMessage,
+            int currentUserId,
+            string currentUserRole,
+            string model,
+            CancellationToken cancellationToken = default)
         {
             string? prepError = null;
             List<DocumentChunk> chunks = new();
@@ -78,11 +84,16 @@ namespace RagChatbot.BLL.Services.Implements
             - Không tự tạo tên file, số trang hoặc số đoạn ngoài metadata nguồn ở trên.
             """;
 
-            return new ChatResult
-            {
-                Sources = sources,
-                Answer = _aiService.GenerateChatResponseStreamAsync(finalPrompt, cancellationToken)
-            };
+            // ChatResult.Usage được set qua callback sau khi stream hoàn tất
+            var chatResult = new ChatResult { Sources = sources };
+
+            chatResult.Answer = _aiService.GenerateChatResponseStreamAsync(
+                finalPrompt,
+                model,
+                usage => chatResult.Usage = usage,   // ChatHub lấy Usage sau khi foreach xong
+                cancellationToken);
+
+            return chatResult;
         }
 
         private static async IAsyncEnumerable<string> Single(string message)
