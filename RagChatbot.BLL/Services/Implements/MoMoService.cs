@@ -49,6 +49,10 @@ namespace RagChatbot.BLL.Services.Implements
         private string RedirectUrl => _config["Momo:RedirectUrl"] ?? "http://localhost:5136/Payment/Return";
         private string IpnUrl => _config["Momo:IpnUrl"] ?? "http://localhost:5136/Payment/Ipn";
 
+        // payWithMethod = cổng đa phương thức (ví + thẻ ATM/Visa) -> nhập được thẻ test trên trình duyệt.
+        // Các giá trị khác: captureWallet (chỉ ví MoMo), payWithATM (vào thẳng thẻ nội địa).
+        private string RequestType => _config["Momo:RequestType"] ?? "payWithMethod";
+
         public IEnumerable<PaymentOrder> GetUserOrders(int userId) => _paymentRepo.GetByUser(userId);
 
         public async Task<string> CreatePaymentUrl(int userId, int packageId, string clientIp)
@@ -61,7 +65,7 @@ namespace RagChatbot.BLL.Services.Implements
             string amount = ((long)package.Price).ToString(CultureInfo.InvariantCulture);
             string orderInfo = $"Thanh toan goi {package.Name}";
             string extraData = "";
-            string requestType = "captureWallet";
+            string requestType = RequestType;
 
             _paymentRepo.Add(new PaymentOrder
             {
