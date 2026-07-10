@@ -21,6 +21,7 @@ namespace RagChatbot.DAL.Data
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<QuizQuestion> QuizQuestions { get; set; }
         public DbSet<QuizResult> QuizResults { get; set; }
+        public DbSet<TokenUsageLog> TokenUsageLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,6 +83,15 @@ namespace RagChatbot.DAL.Data
                 .HasOne(qr => qr.User)
                 .WithMany()
                 .HasForeignKey(qr => qr.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Index cho TokenUsageLog: query theo userId + khoảng thời gian
+            modelBuilder.Entity<TokenUsageLog>()
+                .HasIndex(t => new { t.UserId, t.CreatedAt });
+            modelBuilder.Entity<TokenUsageLog>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<User>().HasData(
