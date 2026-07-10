@@ -35,24 +35,52 @@ namespace RagChatbot.RazorPages.Pages.Home
         public int DocumentCount { get; set; }
         public int OnlineCount { get; set; }
 
+        // Dữ liệu cho biểu đồ dashboard (Chart.js)
+        public List<string> SubjectNames { get; set; } = new();
+        public List<int> SubjectDocCounts { get; set; } = new();
+        public int[] RoleCounts { get; set; } = new int[3]; // [Admin, Lecturer, Student]
+
         private void LoadStats()
         {
             OnlineCount = _presence.OnlineCount;
 
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            string role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+
             if (User.IsInRole("Admin"))
             {
-                SubjectCount = _subjectService.GetAllSubjects().Count();
+                var subjects = _subjectService.GetAllSubjects().ToList();
+                SubjectCount = subjects.Count;
                 DocumentCount = _documentService.CountAllDocuments();
-                UserCount = _userService.GetAllUsers().Count();
+
+                var users = _userService.GetAllUsers().ToList();
+                UserCount = users.Count;
+                RoleCounts = new[]
+                {
+                    users.Count(u => u.Role == "Admin"),
+                    users.Count(u => u.Role == "Lecturer"),
+                    users.Count(u => u.Role == "Student"),
+                };
+
+                // ponytail: N truy vấn theo số môn (N nhỏ). Nếu môn nhiều, thêm CountBySubject vào IDocumentService.
+                foreach (var s in subjects)
+                {
+                    SubjectNames.Add(s.Code);
+                    SubjectDocCounts.Add(_documentService.GetDocumentsBySubject(s.Id, userId, role).Count());
+                }
                 return;
             }
 
-            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            string role = User.FindFirstValue(ClaimTypes.Role) ?? "";
             var assigned = _userSubjectService.GetAssignedSubjects(userId).ToList();
             SubjectCount = assigned.Count;
-            DocumentCount = assigned.Sum(s => _documentService.GetDocumentsBySubject(s.Id, userId, role).Count());
             UserCount = 0;
+            foreach (var s in assigned)
+            {
+                int docs = _documentService.GetDocumentsBySubject(s.Id, userId, role).Count();
+                DocumentCount += docs;
+                SubjectNames.Add(s.Code);
+                SubjectDocCounts.Add(docs);
+            }
         }
 
         public void OnGet() => LoadStats();
