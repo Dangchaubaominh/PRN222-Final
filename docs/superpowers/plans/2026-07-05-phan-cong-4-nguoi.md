@@ -9,10 +9,10 @@ Chia theo **function** (mỗi người sở hữu một mảng tính năng xuyê
 
 | # | Thành viên | Mảng sở hữu | Quy mô |
 |---|---|---|---|
-| **1** | *(điền tên)* | Gói & Thanh toán VNPay (doanh thu) | Lớn |
-| **2** | *(điền tên)* | Token & Chọn model | Lớn |
-| **3** | *(điền tên)* | Thống kê & Báo cáo | Lớn |
-| **4** | *(điền tên)* | Chunk config + Citation + Benchmark | 3 feature nhỏ ≈ 1 lớn |
+| **1** | **Bảo Minh** | Gói & Thanh toán VNPay (doanh thu) | Lớn |
+| **2** | **Tân** | Token & Chọn model | Lớn |
+| **3** | **Vũ** | Thống kê & Báo cáo | Lớn |
+| **4** | **Đại** | Chunk config + Citation + Benchmark | 3 feature nhỏ ≈ 1 lớn |
 
 ## Trạng thái nền
 
@@ -22,7 +22,7 @@ Chia theo **function** (mỗi người sở hữu một mảng tính năng xuyê
 
 ---
 
-## Người 1 — Gói & Thanh toán VNPay
+## Người 1 (Bảo Minh) — Gói & Thanh toán VNPay
 
 **Mục tiêu:** Học sinh mua gói (quota token/tháng) qua VNPay sandbox; sinh dữ liệu doanh thu.
 
@@ -33,7 +33,7 @@ Chia theo **function** (mỗi người sở hữu một mảng tính năng xuyê
 
 **Phụ thuộc:** không (tự chứa). **Bắt đầu ngay.**
 
-## Người 2 — Token & Chọn model
+## Người 2 (Tân) — Token & Chọn model
 
 **Mục tiêu:** đo token mỗi lần chat, chặn khi hết quota, cho chọn model theo gói.
 
@@ -43,7 +43,7 @@ Chia theo **function** (mỗi người sở hữu một mảng tính năng xuyê
 
 **Phụ thuộc:** đọc `UserSubscription.TokensUsed`/`Package.AllowedModels` của **Người 1** (thống nhất tên field sớm). Có thể bắt đầu phần refactor Gemini + TokenUsageLog ngay.
 
-## Người 3 — Thống kê & Báo cáo
+## Người 3 (Vũ) — Thống kê & Báo cáo
 
 **Mục tiêu:** dashboard số liệu cho từng vai trò.
 
@@ -53,7 +53,7 @@ Chia theo **function** (mỗi người sở hữu một mảng tính năng xuyê
 
 **Phụ thuộc:** dữ liệu của Người 1 & 2. **Cách làm:** dựng service + UI với **dữ liệu seed/mock trước**, ghép query thật khi Người 1&2 xong. Không chờ.
 
-## Người 4 — Chunk config + Citation + Benchmark
+## Người 4 (Đại) — Chunk config + Citation + Benchmark
 
 **Mục tiêu:** 3 feature nhỏ độc lập.
 
