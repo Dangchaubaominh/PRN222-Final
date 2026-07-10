@@ -56,6 +56,28 @@
     }
 </div>
 
+<div class="row g-4 mb-4 fade-in-up">
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header-custom">
+                    <h5><i class="bi bi-pie-chart text-primary me-2"></i>Tài khoản theo vai trò</h5>
+                </div>
+                <div style="padding:20px 24px;"><canvas id="chartRoles" height="220"></canvas></div>
+            </div>
+        </div>
+    }
+    <div class="@(User.IsInRole("Admin") ? "col-lg-7" : "col-12")">
+        <div class="card h-100">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-bar-chart text-primary me-2"></i>Tài liệu theo môn học</h5>
+            </div>
+            <div style="padding:20px 24px;"><canvas id="chartDocs" height="220"></canvas></div>
+        </div>
+    </div>
+</div>
+
 @if (User.IsInRole("Admin"))
 {
     <div class="card mb-4 fade-in-up">
@@ -167,5 +189,53 @@
         dashConn.invoke('Broadcast', msg).catch(() => {});
         input.value = '';
     };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        const subjectNames = @Json.Serialize(Model.SubjectNames);
+        const subjectDocs  = @Json.Serialize(Model.SubjectDocCounts);
+        const roleCounts   = @Json.Serialize(Model.RoleCounts);
+
+        const docsEl = document.getElementById('chartDocs');
+        if (docsEl && subjectNames.length) {
+            new Chart(docsEl, {
+                type: 'bar',
+                data: {
+                    labels: subjectNames,
+                    datasets: [{
+                        label: 'Số tài liệu',
+                        data: subjectDocs,
+                        backgroundColor: '#6366F1',
+                        borderRadius: 6,
+                        maxBarThickness: 48
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+
+        const rolesEl = document.getElementById('chartRoles');
+        if (rolesEl && roleCounts.some(x => x > 0)) {
+            new Chart(rolesEl, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Quản trị', 'Giảng viên', 'Sinh viên'],
+                    datasets: [{
+                        data: roleCounts,
+                        backgroundColor: ['#EF4444', '#6366F1', '#06B6D4']
+                    }]
+                },
+                options: {
+                    cutout: '62%',
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+    })();
 </script>
 }

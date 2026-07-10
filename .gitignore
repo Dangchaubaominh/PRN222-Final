@@ -12,3 +12,6 @@ RagChatbot.RazorPages/wwwroot/uploads/
 
 # Logs
 *.log
+
+# Local dev tooling (launch config for preview)
+.claude/
