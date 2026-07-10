@@ -44,6 +44,7 @@ namespace RagChatbot.BLL.Extensions
             services.AddScoped<IChatMessageService, ChatMessageService>();
             services.AddScoped<IPackageService, PackageService>();
             services.AddScoped<ISubscriptionService, SubscriptionService>();
+            services.AddScoped<IPaymentService, VnPayService>();
 
             return services;
         }
