@@ -26,6 +26,9 @@ namespace RagChatbot.BLL.Extensions
             services.AddScoped<IUserSubjectRepository, UserSubjectRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+            services.AddScoped<IPackageRepository, PackageRepository>();
+            services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            services.AddScoped<IPaymentRepository, PaymentRepository>();
 
             // 3. Đăng ký Services (BLL)
             services.AddScoped<IEmailService, EmailService>();
