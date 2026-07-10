@@ -38,6 +38,8 @@ namespace RagChatbot.BLL.Services.Implements
             _subscriptionService = subscriptionService;
         }
 
+        public IEnumerable<PaymentOrder> GetUserOrders(int userId) => _paymentRepo.GetByUser(userId);
+
         public string CreatePaymentUrl(int userId, int packageId, string clientIp)
         {
             var package = _packageRepo.GetById(packageId)
