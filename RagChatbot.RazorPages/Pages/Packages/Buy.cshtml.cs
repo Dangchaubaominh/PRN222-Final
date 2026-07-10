@@ -42,10 +42,21 @@ namespace RagChatbot.RazorPages.Pages.Packages
             }
         }
 
-        public IActionResult OnPostBuy(int packageId)
+        public async Task<IActionResult> OnPostBuy(int packageId)
         {
+            var pkg = _packageService.GetById(packageId);
+            if (pkg == null) return RedirectToPage();
+
+            // Gói miễn phí: kích hoạt ngay, không qua cổng (MoMo yêu cầu số tiền > 0)
+            if (pkg.Price <= 0)
+            {
+                _subscriptionService.ActivateOrRenew(UserId, packageId);
+                TempData["SuccessMessage"] = $"Đã kích hoạt gói {pkg.Name}.";
+                return RedirectToPage("Mine");
+            }
+
             string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-            var url = _paymentService.CreatePaymentUrl(UserId, packageId, ip);
+            var url = await _paymentService.CreatePaymentUrl(UserId, packageId, ip);
             return Redirect(url);
         }
     }

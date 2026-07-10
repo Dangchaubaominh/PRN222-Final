@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using RagChatbot.BLL.DTOs;
 using RagChatbot.DAL.Entities;
 
@@ -9,8 +10,8 @@ namespace RagChatbot.BLL.Services.Interfaces
         // Lịch sử đơn của người dùng (mới nhất trước)
         IEnumerable<PaymentOrder> GetUserOrders(int userId);
 
-        // Tạo đơn Pending + trả về URL thanh toán VNPay để redirect người dùng
-        string CreatePaymentUrl(int userId, int packageId, string clientIp);
+        // Tạo đơn Pending + trả về URL thanh toán (MoMo payUrl) để redirect người dùng
+        Task<string> CreatePaymentUrl(int userId, int packageId, string clientIp);
 
         // Xử lý tham số trả về từ VNPay (đã tách khỏi HttpRequest): xác thực chữ ký,
         // cập nhật đơn, kích hoạt gói. Truyền vào toàn bộ query vnp_* dạng dictionary.
