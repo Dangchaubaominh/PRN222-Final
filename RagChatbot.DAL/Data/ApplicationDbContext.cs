@@ -22,6 +22,9 @@ namespace RagChatbot.DAL.Data
         public DbSet<QuizQuestion> QuizQuestions { get; set; }
         public DbSet<QuizResult> QuizResults { get; set; }
         public DbSet<TokenUsageLog> TokenUsageLogs { get; set; }
+        public DbSet<SubjectChunkConfig> SubjectChunkConfigs { get; set; }
+        public DbSet<BenchmarkRun> BenchmarkRuns { get; set; }
+        public DbSet<BenchmarkResult> BenchmarkResults { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -92,6 +95,30 @@ namespace RagChatbot.DAL.Data
                 .HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<SubjectChunkConfig>()
+                .HasOne(c => c.Subject)
+                .WithOne()
+                .HasForeignKey<SubjectChunkConfig>(c => c.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BenchmarkRun>()
+                .HasOne(r => r.CreatedBy)
+                .WithMany()
+                .HasForeignKey(r => r.CreatedById)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BenchmarkRun>()
+                .HasOne(r => r.Subject)
+                .WithMany()
+                .HasForeignKey(r => r.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BenchmarkResult>()
+                .HasOne(r => r.Run)
+                .WithMany(run => run.Results)
+                .HasForeignKey(r => r.RunId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<User>().HasData(
