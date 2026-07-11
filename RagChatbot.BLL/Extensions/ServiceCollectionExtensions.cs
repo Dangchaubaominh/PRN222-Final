@@ -27,6 +27,8 @@ namespace RagChatbot.BLL.Extensions
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
             services.AddScoped<ITokenUsageRepository, TokenUsageRepository>();
+            services.AddScoped<IChunkConfigRepository, ChunkConfigRepository>();
+            services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
 
             // 3. Đăng ký Services (BLL)
             services.AddScoped<IEmailService, EmailService>();
@@ -41,6 +43,8 @@ namespace RagChatbot.BLL.Extensions
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IChatMessageService, ChatMessageService>();
             services.AddScoped<ITokenUsageService, TokenUsageService>();
+            services.AddScoped<IChunkConfigService, ChunkConfigService>();
+            services.AddScoped<IBenchmarkService, BenchmarkService>();
             // TODO: Thay SubscriptionServiceStub bằng SubscriptionService thật khi Bảo Minh xong
             services.AddScoped<ISubscriptionService, SubscriptionServiceStub>();
 

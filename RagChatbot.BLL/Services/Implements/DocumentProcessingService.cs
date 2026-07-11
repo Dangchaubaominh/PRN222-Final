@@ -24,13 +24,15 @@ namespace RagChatbot.BLL.Services.Implements
         private readonly IAIService _aiService;
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _config;
+        private readonly IChunkConfigService _chunkConfigService;
 
-        public DocumentProcessingService(IDocumentRepository documentRepo, IAIService aiService, ApplicationDbContext context, IConfiguration config)
+        public DocumentProcessingService(IDocumentRepository documentRepo, IAIService aiService, ApplicationDbContext context, IConfiguration config, IChunkConfigService chunkConfigService)
         {
             _documentRepo = documentRepo;
             _aiService = aiService;
             _context = context;
             _config = config;
+            _chunkConfigService = chunkConfigService;
         }
 
         public async Task<bool> ProcessDocumentAsync(Guid documentId, string rootPath, Action<string>? onProgress = null)
@@ -85,11 +87,12 @@ namespace RagChatbot.BLL.Services.Implements
                 // 3. Semantic Chunking: chia văn bản theo ranh giới đoạn văn / câu
                 //    (không bao giờ cắt giữa câu, overlap theo câu thay vì từ)
                 onProgress?.Invoke("Đang chia nhỏ văn bản (Chunking)...");
+                var chunkConfig = await _chunkConfigService.GetForSubjectAsync(doc.SubjectId);
                 var chunks = textSegments
                     .Where(segment => !string.IsNullOrWhiteSpace(segment.Text))
                     .SelectMany(segment => SemanticChunker.SplitText(segment.Text,
-                                                                     maxWordsPerChunk: 400,
-                                                                     overlapSentences:  2)
+                                                                     maxWordsPerChunk: chunkConfig.MaxWordsPerChunk,
+                                                                     overlapSentences:  chunkConfig.OverlapSentences)
                                                           .Select(text => new TextSegment(text, segment.PageNumber)))
                     .ToList();
 

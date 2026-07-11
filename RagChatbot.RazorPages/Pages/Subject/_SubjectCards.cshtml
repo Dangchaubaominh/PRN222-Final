@@ -53,6 +53,10 @@ else
                         }
                         @if (User.IsInRole("Admin"))
                         {
+                            <a asp-page="ChunkConfig" asp-route-subjectId="@item.Id"
+                               class="btn-app btn-sm-app btn-primary-app" title="Cấu hình Chunk">
+                                <i class="bi bi-gear"></i>
+                            </a>
                             <form asp-page-handler="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
                                 <button type="button" class="btn-app btn-sm-app btn-danger-app"
                                         onclick="swalDelete(this, 'Xoá môn học?', 'Môn học &quot;@item.Name&quot; và toàn bộ tài liệu sẽ bị xoá vĩnh viễn.')">

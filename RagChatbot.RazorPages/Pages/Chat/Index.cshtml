@@ -382,10 +382,11 @@
 
     function normalizeSource(source) {
         if (typeof source === 'string') {
-            return { fileName: source, pageNumber: null, chunkIndex: null, snippet: '' };
+            return { fileName: source, pageNumber: null, chunkIndex: null, snippet: '', documentId: null };
         }
 
         return {
+            documentId: source.documentId || source.DocumentId || null,
             fileName: source.fileName || source.FileName || 'Unknown document',
             pageNumber: source.pageNumber ?? source.PageNumber ?? null,
             chunkIndex: source.chunkIndex ?? source.ChunkIndex ?? null,
@@ -421,6 +422,18 @@
             locationEl.className = 'source-location';
             locationEl.textContent = '(' + location.join(', ') + ')';
             meta.appendChild(locationEl);
+        }
+
+        if (source.documentId) {
+            const btn = document.createElement('a');
+            btn.className = 'btn-app btn-sm-app btn-primary-app';
+            btn.style.marginLeft = 'auto';
+            btn.style.fontSize = '11px';
+            btn.style.padding = '2px 8px';
+            btn.href = '/Document/ViewDoc?id=' + source.documentId;
+            btn.target = '_blank';
+            btn.innerHTML = '<i class="bi bi-box-arrow-up-right"></i> Mở tài liệu';
+            meta.appendChild(btn);
         }
 
         item.appendChild(meta);
