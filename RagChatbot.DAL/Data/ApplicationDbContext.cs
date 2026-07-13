@@ -24,6 +24,10 @@ namespace RagChatbot.DAL.Data
         public DbSet<Package> Packages { get; set; }
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
         public DbSet<PaymentOrder> PaymentOrders { get; set; }
+        public DbSet<TokenUsageLog> TokenUsageLogs { get; set; }
+        public DbSet<SubjectChunkConfig> SubjectChunkConfigs { get; set; }
+        public DbSet<BenchmarkRun> BenchmarkRuns { get; set; }
+        public DbSet<BenchmarkResult> BenchmarkResults { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -87,7 +91,7 @@ namespace RagChatbot.DAL.Data
                 .HasForeignKey(qr => qr.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Mã giao dịch VNPay là duy nhất
+            // Mã giao dịch thanh toán là duy nhất
             modelBuilder.Entity<PaymentOrder>()
                 .HasIndex(p => p.VnpTxnRef)
                 .IsUnique();
@@ -98,6 +102,39 @@ namespace RagChatbot.DAL.Data
                 new Package { Id = 2, Name = "Basic", Price = 49000, TokenQuota = 500_000,   AllowedModels = "gemini-2.5-flash-lite,gemini-2.5-flash", DurationDays = 30, IsActive = true },
                 new Package { Id = 3, Name = "Pro",   Price = 99000, TokenQuota = 2_000_000, AllowedModels = "gemini-2.5-flash-lite,gemini-2.5-flash,gemini-2.5-pro", DurationDays = 30, IsActive = true }
             );
+
+            // Index cho TokenUsageLog: query theo userId + khoảng thời gian
+            modelBuilder.Entity<TokenUsageLog>()
+                .HasIndex(t => new { t.UserId, t.CreatedAt });
+            modelBuilder.Entity<TokenUsageLog>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<SubjectChunkConfig>()
+                .HasOne(c => c.Subject)
+                .WithOne()
+                .HasForeignKey<SubjectChunkConfig>(c => c.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BenchmarkRun>()
+                .HasOne(r => r.CreatedBy)
+                .WithMany()
+                .HasForeignKey(r => r.CreatedById)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BenchmarkRun>()
+                .HasOne(r => r.Subject)
+                .WithMany()
+                .HasForeignKey(r => r.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BenchmarkResult>()
+                .HasOne(r => r.Run)
+                .WithMany(run => run.Results)
+                .HasForeignKey(r => r.RunId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<User>().HasData(
                 new User { Id = 1,  Username = "admin",       Password = "$2a$11$36oZGMR0pUm/uccAWPAXquewdW59sC4q5ZyPieDIq0OezNeL/dIVu", Role = "Admin",    FullName = "Nguyễn Quản Trị" },

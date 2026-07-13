@@ -62,7 +62,8 @@ NỘI DUNG TÀI LIỆU:
 {documentContent}
 ";
             
-            string responseJson = await _aiService.GenerateContentAsync(prompt);
+            // Quiz dùng model mặc định flash để đảm bảo tính ổn định
+            var (responseJson, _) = await _aiService.GenerateContentAsync(prompt, "gemini-2.5-flash");
             if (string.IsNullOrWhiteSpace(responseJson))
                 throw new Exception("Không nhận được phản hồi từ AI.");
 

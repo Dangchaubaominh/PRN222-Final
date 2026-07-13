@@ -60,6 +60,26 @@
 
     <div class="chat-input-area">
         <input type="hidden" id="SubjectId" value="@Model.SubjectId" />
+
+        @* Dropdown chọn model — hiện model theo gói của user *@
+        <div class="model-selector-row">
+            <label for="modelSelector" class="model-label">
+                <i class="bi bi-cpu"></i> Model:
+            </label>
+            <select id="modelSelector" class="model-select">
+                @foreach (var m in Model.AllowedModels)
+                {
+                    var label = m switch
+                    {
+                        "gemini-2.5-flash"      => "Flash (cân bằng)",
+                        "gemini-2.5-pro"        => "Pro (mạnh nhất)",
+                        _                       => m
+                    };
+                    <option value="@m">@label</option>
+                }
+            </select>
+        </div>
+
         <input type="text" id="userInput" class="chat-input"
                placeholder="Nhập câu hỏi của bạn..." autocomplete="off" disabled />
         <button class="chat-send-btn" id="sendBtn" onclick="sendMessage()" disabled>
@@ -81,6 +101,25 @@
         margin: 6px 0 0; padding: 0 0 0 10px; border-left: 3px solid rgba(99,102,241,.35);
         color: var(--text-3);
     }
+    /* ── Model selector ── */
+    .model-selector-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 12px 4px;
+        border-bottom: 1px solid var(--border, rgba(255,255,255,.08));
+    }
+    .model-label {
+        font-size: 12px; font-weight: 600; color: var(--text-3);
+        display: flex; align-items: center; gap: 4px; white-space: nowrap;
+    }
+    .model-select {
+        flex: 1; max-width: 260px;
+        background: var(--bg-2, rgba(255,255,255,.06));
+        color: var(--text-1, #e2e8f0);
+        border: 1px solid var(--border, rgba(255,255,255,.12));
+        border-radius: 8px; padding: 4px 10px; font-size: 13px;
+        cursor: pointer; outline: none; transition: border-color .2s;
+    }
+    .model-select:focus { border-color: var(--primary, #6366f1); }
     .msg-sources {
         margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);
         font-size: 12px; color: var(--text-3);
@@ -272,11 +311,12 @@
     function sendMessage() {
         const text = inputEl.value.trim();
         if (!text || sendBtn.disabled) return;
+        const model = document.getElementById('modelSelector')?.value || 'gemini-2.5-flash';
         appendUserMsg(text);
         inputEl.value = '';
         streamBubble = null;
         lockInput();
-        connection.invoke('StreamMessage', subjectId, text)
+        connection.invoke('StreamMessage', subjectId, text, model)
             .catch(() => {
                 removeLoading(); streamBubble = null;
                 appendHtml('', 'ai', null, 'Lỗi gửi câu hỏi đến máy chủ. Vui lòng thử lại.');
@@ -342,10 +382,11 @@
 
     function normalizeSource(source) {
         if (typeof source === 'string') {
-            return { fileName: source, pageNumber: null, chunkIndex: null, snippet: '' };
+            return { fileName: source, pageNumber: null, chunkIndex: null, snippet: '', documentId: null };
         }
 
         return {
+            documentId: source.documentId || source.DocumentId || null,
             fileName: source.fileName || source.FileName || 'Unknown document',
             pageNumber: source.pageNumber ?? source.PageNumber ?? null,
             chunkIndex: source.chunkIndex ?? source.ChunkIndex ?? null,
@@ -381,6 +422,18 @@
             locationEl.className = 'source-location';
             locationEl.textContent = '(' + location.join(', ') + ')';
             meta.appendChild(locationEl);
+        }
+
+        if (source.documentId) {
+            const btn = document.createElement('a');
+            btn.className = 'btn-app btn-sm-app btn-primary-app';
+            btn.style.marginLeft = 'auto';
+            btn.style.fontSize = '11px';
+            btn.style.padding = '2px 8px';
+            btn.href = '/Document/ViewDoc?id=' + source.documentId;
+            btn.target = '_blank';
+            btn.innerHTML = '<i class="bi bi-box-arrow-up-right"></i> Mở tài liệu';
+            meta.appendChild(btn);
         }
 
         item.appendChild(meta);

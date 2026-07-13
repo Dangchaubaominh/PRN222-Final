@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -12,9 +13,11 @@ using RagChatbot.DAL.Data;
 namespace RagChatbot.DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710165343_AddTokenUsageLog")]
+    partial class AddTokenUsageLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -23,71 +26,6 @@ namespace RagChatbot.DAL.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("RagChatbot.DAL.Entities.BenchmarkResult", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Answer")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("EstimatedCost")
-                        .HasColumnType("decimal(18, 6)");
-
-                    b.Property<int>("LatencyMs")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Question")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("RunId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalTokens")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RunId");
-
-                    b.ToTable("BenchmarkResults");
-                });
-
-            modelBuilder.Entity("RagChatbot.DAL.Entities.BenchmarkRun", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CreatedById")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid?>("SubjectId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedById");
-
-                    b.HasIndex("SubjectId");
-
-                    b.ToTable("BenchmarkRuns");
-                });
 
             modelBuilder.Entity("RagChatbot.DAL.Entities.ChatMessage", b =>
                 {
@@ -240,114 +178,6 @@ namespace RagChatbot.DAL.Migrations
                     b.ToTable("Notifications");
                 });
 
-            modelBuilder.Entity("RagChatbot.DAL.Entities.Package", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AllowedModels")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<int>("DurationDays")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric(12,2)");
-
-                    b.Property<long>("TokenQuota")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Packages");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AllowedModels = "gemini-2.5-flash-lite",
-                            DurationDays = 30,
-                            IsActive = true,
-                            Name = "Free",
-                            Price = 0m,
-                            TokenQuota = 50000L
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AllowedModels = "gemini-2.5-flash-lite,gemini-2.5-flash",
-                            DurationDays = 30,
-                            IsActive = true,
-                            Name = "Basic",
-                            Price = 49000m,
-                            TokenQuota = 500000L
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AllowedModels = "gemini-2.5-flash-lite,gemini-2.5-flash,gemini-2.5-pro",
-                            DurationDays = 30,
-                            IsActive = true,
-                            Name = "Pro",
-                            Price = 99000m,
-                            TokenQuota = 2000000L
-                        });
-                });
-
-            modelBuilder.Entity("RagChatbot.DAL.Entities.PaymentOrder", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric(12,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("PackageId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("VnpTxnRef")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("VnpTxnRef")
-                        .IsUnique();
-
-                    b.ToTable("PaymentOrders");
-                });
-
             modelBuilder.Entity("RagChatbot.DAL.Entities.Quiz", b =>
                 {
                     b.Property<int>("Id")
@@ -480,27 +310,6 @@ namespace RagChatbot.DAL.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Subjects");
-                });
-
-            modelBuilder.Entity("RagChatbot.DAL.Entities.SubjectChunkConfig", b =>
-                {
-                    b.Property<Guid>("SubjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("MaxWordsPerChunk")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OverlapSentences")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Strategy")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("SubjectId");
-
-                    b.ToTable("SubjectChunkConfigs");
                 });
 
             modelBuilder.Entity("RagChatbot.DAL.Entities.TokenUsageLog", b =>
@@ -705,68 +514,6 @@ namespace RagChatbot.DAL.Migrations
                     b.ToTable("UserSubjects");
                 });
 
-            modelBuilder.Entity("RagChatbot.DAL.Entities.UserSubscription", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpireAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("PackageId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("StartAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
-
-                    b.Property<long>("TokensUsed")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UserSubscriptions");
-                });
-
-            modelBuilder.Entity("RagChatbot.DAL.Entities.BenchmarkResult", b =>
-                {
-                    b.HasOne("RagChatbot.DAL.Entities.BenchmarkRun", "Run")
-                        .WithMany("Results")
-                        .HasForeignKey("RunId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Run");
-                });
-
-            modelBuilder.Entity("RagChatbot.DAL.Entities.BenchmarkRun", b =>
-                {
-                    b.HasOne("RagChatbot.DAL.Entities.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("RagChatbot.DAL.Entities.Subject", "Subject")
-                        .WithMany()
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("Subject");
-                });
-
             modelBuilder.Entity("RagChatbot.DAL.Entities.Document", b =>
                 {
                     b.HasOne("RagChatbot.DAL.Entities.Subject", "Subject")
@@ -853,17 +600,6 @@ namespace RagChatbot.DAL.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("RagChatbot.DAL.Entities.SubjectChunkConfig", b =>
-                {
-                    b.HasOne("RagChatbot.DAL.Entities.Subject", "Subject")
-                        .WithOne()
-                        .HasForeignKey("RagChatbot.DAL.Entities.SubjectChunkConfig", "SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Subject");
-                });
-
             modelBuilder.Entity("RagChatbot.DAL.Entities.TokenUsageLog", b =>
                 {
                     b.HasOne("RagChatbot.DAL.Entities.User", "User")
@@ -892,11 +628,6 @@ namespace RagChatbot.DAL.Migrations
                     b.Navigation("Subject");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("RagChatbot.DAL.Entities.BenchmarkRun", b =>
-                {
-                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("RagChatbot.DAL.Entities.Quiz", b =>

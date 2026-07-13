@@ -8,8 +8,9 @@ namespace RagChatbot.RazorPages.Hubs
 {
     /// <summary>
     /// Hub real-time cho Chat AI. Client gửi câu hỏi qua "StreamMessage";
-    /// server kiểm tra quyền, lưu lịch sử, ủy thác cho BLL (RAG), rồi đẩy câu
+    /// server kiểm tra quyền, kiểm tra quota, ủy thác cho BLL (RAG), rồi đẩy câu
     /// trả lời theo từng đoạn (streaming) kèm danh sách nguồn trích dẫn.
+    /// Sau khi xong: ghi TokenUsageLog và trừ quota subscription.
     /// </summary>
     [Authorize]
     public class ChatHub : Hub
@@ -17,18 +18,30 @@ namespace RagChatbot.RazorPages.Hubs
         private readonly IChatbotService _chatbotService;
         private readonly IChatMessageService _history;
         private readonly IUserSubjectService _userSubjectService;
+        private readonly ITokenUsageService _tokenUsageService;
+        private readonly ISubscriptionService _subscriptionService;
 
         public ChatHub(
             IChatbotService chatbotService,
             IChatMessageService history,
-            IUserSubjectService userSubjectService)
+            IUserSubjectService userSubjectService,
+            ITokenUsageService tokenUsageService,
+            ISubscriptionService subscriptionService)
         {
-            _chatbotService = chatbotService;
-            _history = history;
-            _userSubjectService = userSubjectService;
+            _chatbotService      = chatbotService;
+            _history             = history;
+            _userSubjectService  = userSubjectService;
+            _tokenUsageService   = tokenUsageService;
+            _subscriptionService = subscriptionService;
         }
 
-        public async Task StreamMessage(Guid subjectId, string userMessage)
+        /// <summary>
+        /// Client gửi câu hỏi kèm model đã chọn.
+        /// </summary>
+        /// <param name="subjectId">ID môn học</param>
+        /// <param name="userMessage">Câu hỏi của người dùng</param>
+        /// <param name="model">Model Gemini đã chọn (vd: "gemini-2.5-flash"). Mặc định: "gemini-2.5-flash"</param>
+        public async Task StreamMessage(Guid subjectId, string userMessage, string model = "gemini-2.5-flash")
         {
             if (string.IsNullOrWhiteSpace(userMessage)) return;
             if (!int.TryParse(Context.UserIdentifier, out int userId)) return;
@@ -41,6 +54,15 @@ namespace RagChatbot.RazorPages.Hubs
                 return;
             }
 
+            // Kiểm tra quota trước khi gọi AI
+            long remaining = _subscriptionService.GetRemainingQuota(userId);
+            if (remaining <= 0)
+            {
+                await Clients.Caller.SendAsync("ReceiveError",
+                    "⚠️ Hết quota token. Vui lòng nâng cấp gói để tiếp tục sử dụng.");
+                return;
+            }
+
             // Lưu câu hỏi của người dùng
             _history.Save(userId, subjectId, "user", userMessage);
 
@@ -49,7 +71,7 @@ namespace RagChatbot.RazorPages.Hubs
             try
             {
                 string role = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
-                var result = await _chatbotService.AskAsync(subjectId, userMessage, userId, role, Context.ConnectionAborted);
+                var result = await _chatbotService.AskAsync(subjectId, userMessage, userId, role, model, Context.ConnectionAborted);
 
                 var sb = new StringBuilder();
                 await foreach (var piece in result.Answer)
@@ -65,8 +87,14 @@ namespace RagChatbot.RazorPages.Hubs
 
                 // Lưu câu trả lời của AI
                 int messageId = _history.Save(userId, subjectId, "assistant", sb.ToString(), result.Sources);
-                
                 await Clients.Caller.SendAsync("ReceiveMessageId", messageId);
+
+                // Ghi log token và trừ quota (sau khi stream hoàn tất)
+                if (result.Usage is { TotalTokens: > 0 } usage)
+                {
+                    await _tokenUsageService.LogAsync(userId, subjectId, model, usage.PromptTokens, usage.CompletionTokens);
+                    _subscriptionService.AddUsedTokens(userId, usage.TotalTokens);
+                }
             }
             catch
             {
@@ -112,16 +140,16 @@ namespace RagChatbot.RazorPages.Hubs
         public async Task SubmitFeedback(int messageId, int? feedback)
         {
             if (!int.TryParse(Context.UserIdentifier, out int userId)) return;
-            
+
             RagChatbot.DAL.Entities.FeedbackType? type = feedback switch
             {
-                1 => RagChatbot.DAL.Entities.FeedbackType.Upvote,
+                1  => RagChatbot.DAL.Entities.FeedbackType.Upvote,
                 -1 => RagChatbot.DAL.Entities.FeedbackType.Downvote,
-                _ => null
+                _  => null
             };
-            
+
             _history.UpdateFeedback(messageId, userId, type);
-            
+
             await Clients.Caller.SendAsync("FeedbackReceived", messageId, feedback);
         }
     }

@@ -1,0 +1,62 @@
+@page "{SubjectId:guid}"
+@model RagChatbot.RazorPages.Pages.Subject.ChunkConfigModel
+@{
+    ViewData["Title"] = "Cấu hình Chunk - " + Model.SubjectName;
+}
+
+<div class="breadcrumb-app fade-in-up">
+    <a asp-page="/Subject/Index"><i class="bi bi-book me-1"></i>Môn học</a>
+    <span class="sep"><i class="bi bi-chevron-right" style="font-size:10px"></i></span>
+    <span class="current">Cấu hình Chunk (@Model.SubjectName)</span>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="form-card fade-in-up">
+            <div style="margin-bottom:24px">
+                <h4 style="font-size:18px;font-weight:700;color:var(--text-1);margin:0">Cấu hình Chunk cho AI</h4>
+                <p style="font-size:13px;color:var(--text-2);margin:4px 0 0">Tùy chỉnh thông số chia nhỏ văn bản (Semantic Chunking) cho môn học <strong>@Model.SubjectName</strong>.</p>
+            </div>
+
+            <form method="post">
+                <input type="hidden" asp-for="SubjectId" />
+                
+                <div class="form-group mb-3">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:6px">Max Words Per Chunk</label>
+                    <input asp-for="Input.MaxWordsPerChunk" class="form-control" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-2);color:var(--text-1)" />
+                    <span asp-validation-for="Input.MaxWordsPerChunk" class="text-danger" style="font-size:12px"></span>
+                    <small style="color:var(--text-3);font-size:12px;margin-top:4px;display:block">Số từ tối đa trong mỗi khối văn bản (Mặc định: 400).</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:6px">Overlap Sentences</label>
+                    <input asp-for="Input.OverlapSentences" class="form-control" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-2);color:var(--text-1)" />
+                    <span asp-validation-for="Input.OverlapSentences" class="text-danger" style="font-size:12px"></span>
+                    <small style="color:var(--text-3);font-size:12px;margin-top:4px;display:block">Số câu chồng lấn giữa 2 khối liên tiếp (Mặc định: 2).</small>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label" style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:6px">Strategy</label>
+                    <select asp-for="Input.Strategy" class="form-select form-control" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-2);color:var(--text-1)">
+                        <option value="Semantic">Semantic (Dựa trên ý nghĩa)</option>
+                        <option value="Fixed">Fixed (Độ dài cố định)</option>
+                    </select>
+                    <span asp-validation-for="Input.Strategy" class="text-danger" style="font-size:12px"></span>
+                </div>
+
+                <div style="display:flex;gap:10px;margin-top:24px">
+                    <button type="submit" class="btn-app btn-primary-app">
+                        <i class="bi bi-save"></i> Lưu Cấu Hình
+                    </button>
+                    <a asp-page="/Subject/Index" class="btn-app btn-ghost">
+                        Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

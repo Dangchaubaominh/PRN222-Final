@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Configuration;
+using RagChatbot.BLL.DTOs;
+using RagChatbot.BLL.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +10,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using RagChatbot.BLL.Services.Interfaces;
 
 namespace RagChatbot.BLL.Services.Implements
 {
@@ -17,6 +18,9 @@ namespace RagChatbot.BLL.Services.Implements
         private static readonly HttpClient _httpClient = new HttpClient();
         private readonly string _apiKey;
 
+        // Model mặc định khi caller không chỉ định (gói Free)
+        private const string DefaultModel = "gemini-2.5-flash-lite";
+
         public GeminiService(IConfiguration config)
         {
             _apiKey = config["Gemini:ApiKey"];
@@ -24,7 +28,6 @@ namespace RagChatbot.BLL.Services.Implements
 
         public async Task<float[]> GenerateEmbeddingAsync(string text)
         {
-            // 1. Đổi sang Model nhúng mới nhất: gemini-embedding-001
             string url = $"https://generativelanguage.googleapis.com/v1/models/gemini-embedding-001:embedContent?key={_apiKey}";
 
             var requestBody = new
@@ -34,19 +37,17 @@ namespace RagChatbot.BLL.Services.Implements
                 {
                     parts = new[] { new { text = text } }
                 },
-                // 2. CỰC KỲ QUAN TRỌNG: ÉP Google trả về đúng 768 chiều
-                // để khớp tuyệt đối với cấu hình PostgreSQL của bạn
+                // Ép Google trả về đúng 768 chiều để khớp với cấu hình PostgreSQL
                 outputDimensionality = 768
             };
 
             var jsonContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(url, jsonContent);
 
-            // 3. Xử lý báo lỗi chi tiết (bắt tận tay thông báo lỗi từ server Google)
             if (!response.IsSuccessStatusCode)
             {
                 string errorDetail = await response.Content.ReadAsStringAsync();
-                throw new System.Exception($"Lỗi từ Gemini API (HTTP {(int)response.StatusCode}): {errorDetail}");
+                throw new Exception($"Lỗi từ Gemini API (HTTP {(int)response.StatusCode}): {errorDetail}");
             }
 
             var responseString = await response.Content.ReadAsStringAsync();
@@ -59,19 +60,24 @@ namespace RagChatbot.BLL.Services.Implements
 
             var vectorList = new List<float>();
             foreach (var value in values)
-            {
                 vectorList.Add(value.GetSingle());
-            }
 
             return vectorList.ToArray();
         }
 
+        /// <summary>
+        /// Streaming chat — yield từng chunk text.
+        /// Sau chunk cuối, đọc usageMetadata và gọi <paramref name="onUsageAvailable"/> callback.
+        /// </summary>
         public async IAsyncEnumerable<string> GenerateChatResponseStreamAsync(
             string prompt,
+            string model,
+            Action<TokenUsage> onUsageAvailable,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            // Dùng endpoint streaming của Gemini (Server-Sent Events)
-            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key={_apiKey}";
+            // Dùng model do caller truyền vào (theo gói của user)
+            string safeModel = string.IsNullOrWhiteSpace(model) ? DefaultModel : model;
+            string url = $"https://generativelanguage.googleapis.com/v1beta/models/{safeModel}:streamGenerateContent?alt=sse&key={_apiKey}";
 
             var requestBody = new
             {
@@ -99,7 +105,9 @@ namespace RagChatbot.BLL.Services.Implements
             using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var reader = new StreamReader(stream);
 
+            TokenUsage? lastUsage = null;
             string? line;
+
             while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
             {
                 // SSE: mỗi sự kiện là dòng "data: {json}", phân tách bởi dòng trống
@@ -110,15 +118,29 @@ namespace RagChatbot.BLL.Services.Implements
                 if (json == "[DONE]")
                     break;
 
+                // Bóc text chunk
                 string? delta = ExtractText(json);
                 if (!string.IsNullOrEmpty(delta))
                     yield return delta;
+
+                // Đọc usageMetadata nếu có (thường xuất hiện ở chunk cuối cùng)
+                TokenUsage? usage = ExtractUsage(json);
+                if (usage != null)
+                    lastUsage = usage;
             }
+
+            // Sau khi stream xong — báo token count cho ChatHub qua callback
+            onUsageAvailable(lastUsage ?? new TokenUsage(0, 0, 0));
         }
 
-        public async Task<string> GenerateContentAsync(string prompt, CancellationToken cancellationToken = default)
+        /// <summary>Sinh nội dung không streaming (dùng cho Quiz). Trả về text + token đã dùng.</summary>
+        public async Task<(string Content, TokenUsage Usage)> GenerateContentAsync(
+            string prompt,
+            string model,
+            CancellationToken cancellationToken = default)
         {
-            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={_apiKey}";
+            string safeModel = string.IsNullOrWhiteSpace(model) ? DefaultModel : model;
+            string url = $"https://generativelanguage.googleapis.com/v1beta/models/{safeModel}:generateContent?key={_apiKey}";
 
             var requestBody = new
             {
@@ -147,16 +169,22 @@ namespace RagChatbot.BLL.Services.Implements
 
             var responseString = await response.Content.ReadAsStringAsync(cancellationToken);
             using var doc = JsonDocument.Parse(responseString);
-            
-            if (!doc.RootElement.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
-                return null;
 
-            return candidates[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+            string content = null;
+            if (doc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+            {
+                content = candidates[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString();
+            }
+
+            TokenUsage usage = ExtractUsageFromRoot(doc.RootElement) ?? new TokenUsage(0, 0, 0);
+            return (content, usage);
         }
+
+        // ── Helpers ─────────────────────────────────────────────────────────────
 
         // Gắn System Prompt thẳng vào câu hỏi để ép AI không được "bịa" thông tin
         private static string BuildFullPrompt(string prompt) => @"
@@ -178,7 +206,7 @@ namespace RagChatbot.BLL.Services.Implements
             NGỮ CẢNH:
             " + prompt;
 
-        // Bóc text từ 1 chunk JSON của Gemini; trả null nếu không có/không hợp lệ
+        /// <summary>Bóc text từ 1 chunk JSON của Gemini SSE; trả null nếu không có/không hợp lệ</summary>
         private static string? ExtractText(string json)
         {
             try
@@ -193,10 +221,31 @@ namespace RagChatbot.BLL.Services.Implements
                     .GetProperty("text")
                     .GetString();
             }
-            catch
+            catch { return null; }
+        }
+
+        /// <summary>Bóc usageMetadata từ một chunk SSE (thường xuất hiện ở chunk cuối)</summary>
+        private static TokenUsage? ExtractUsage(string json)
+        {
+            try
             {
-                return null;
+                using var doc = JsonDocument.Parse(json);
+                return ExtractUsageFromRoot(doc.RootElement);
             }
+            catch { return null; }
+        }
+
+        /// <summary>Đọc promptTokenCount / candidatesTokenCount / totalTokenCount từ usageMetadata</summary>
+        private static TokenUsage? ExtractUsageFromRoot(JsonElement root)
+        {
+            if (!root.TryGetProperty("usageMetadata", out var meta))
+                return null;
+
+            int promptTokens      = meta.TryGetProperty("promptTokenCount",     out var p) ? p.GetInt32() : 0;
+            int completionTokens  = meta.TryGetProperty("candidatesTokenCount", out var c) ? c.GetInt32() : 0;
+            int totalTokens       = meta.TryGetProperty("totalTokenCount",      out var t) ? t.GetInt32() : promptTokens + completionTokens;
+
+            return new TokenUsage(promptTokens, completionTokens, totalTokens);
         }
     }
 }
