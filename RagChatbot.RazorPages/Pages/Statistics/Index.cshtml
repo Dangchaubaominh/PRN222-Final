@@ -40,13 +40,13 @@
         <div class="col-lg-7">
             <div class="card h-100">
                 <div class="card-header-custom"><h5><i class="bi bi-graph-up-arrow text-success me-2"></i>Doanh thu 30 ngày</h5></div>
-                <div style="padding:20px 24px;"><canvas id="chartRevenue" height="230"></canvas></div>
+                <div style="position:relative;height:260px;padding:16px 24px;"><canvas id="chartRevenue"></canvas></div>
             </div>
         </div>
         <div class="col-lg-5">
             <div class="card h-100">
                 <div class="card-header-custom"><h5><i class="bi bi-pie-chart text-primary me-2"></i>Token theo model</h5></div>
-                <div style="padding:20px 24px;"><canvas id="chartTokenModel" height="230"></canvas></div>
+                <div style="position:relative;height:260px;padding:16px 24px;"><canvas id="chartTokenModel"></canvas></div>
             </div>
         </div>
     </div>
@@ -55,7 +55,7 @@
         <div class="col-lg-7">
             <div class="card h-100">
                 <div class="card-header-custom"><h5><i class="bi bi-bar-chart text-warning me-2"></i>Token 30 ngày</h5></div>
-                <div style="padding:20px 24px;"><canvas id="chartToken" height="200"></canvas></div>
+                <div style="position:relative;height:240px;padding:16px 24px;"><canvas id="chartToken"></canvas></div>
             </div>
         </div>
         <div class="col-lg-5">
@@ -119,21 +119,21 @@ else if (Model.Lecturer != null)
             if (rev) new Chart(rev, {
                 type: 'line',
                 data: { labels: revLabels, datasets: [{ label: 'Doanh thu (đ)', data: revData, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,.12)', fill: true, tension: .3 }] },
-                options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
 
             const tok = document.getElementById('chartToken');
             if (tok) new Chart(tok, {
                 type: 'bar',
                 data: { labels: tokLabels, datasets: [{ label: 'Token', data: tokData, backgroundColor: '#F59E0B', borderRadius: 6 }] },
-                options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
 
             const tm = document.getElementById('chartTokenModel');
             if (tm && modelData.some(x => x > 0)) new Chart(tm, {
                 type: 'doughnut',
                 data: { labels: modelLabels, datasets: [{ data: modelData, backgroundColor: ['#6366F1', '#06B6D4', '#EF4444', '#F59E0B'] }] },
-                options: { cutout: '60%', plugins: { legend: { position: 'bottom' } } }
+                options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom' } } }
             });
         })();
     </script>
