@@ -111,7 +111,7 @@ SubjectChunkConfig IChunkConfigService.GetForSubject(Guid subjectId); // trả m
 
 1. **Migration EF (dễ vỡ nhất):** ai thêm entity → `git pull main` → `dotnet ef migrations add <Ten> --project RagChatbot.DAL --startup-project RagChatbot.RazorPages` → `dotnet ef database update` → build/test → **push ngay + báo nhóm**. Đừng để 2 migration chưa merge cùng lúc. Nếu kẹt: xoá migration của mình, pull, tạo lại.
 2. **File dùng chung** (`ApplicationDbContext`, `ServiceCollectionExtensions`, `_Layout` nav): conflict nhỏ — luôn `git pull --rebase origin main` trước khi push.
-3. **Secret** (`appsettings.json`, MoMo HashSecret, Gemini key): để User Secrets / file gitignore. **Không commit.**
+3. **Secret** (`appsettings.json`, MoMo SecretKey — chỉ cần cho production, Gemini key): để User Secrets / file gitignore. **Không commit.**
 
 ## 7. Quy trình git (mỗi nhiệm vụ)
 
