@@ -45,19 +45,19 @@ SubjectChunkConfig IChunkConfigService.GetForSubject(Guid subjectId); // trả m
 
 ---
 
-## 2. Bảo Minh — Gói & Thanh toán VNPay
+## 2. Bảo Minh — Gói & Thanh toán MoMo
 
-**Mục tiêu:** Học sinh mua gói (quota token/tháng) qua VNPay sandbox → sinh dữ liệu doanh thu.
+**Mục tiêu:** Học sinh mua gói (quota token/tháng) qua MoMo sandbox → sinh dữ liệu doanh thu.
 
 **Task:**
 1. **DAL** — tạo entity `Package`, `UserSubscription`, `PaymentOrder` (Mục 1.2) trong `RagChatbot.DAL/Entities/`; thêm `DbSet` vào `ApplicationDbContext`; tạo repository `IPackageRepository`, `ISubscriptionRepository`, `IPaymentRepository` (+ Impl). **Migration** `AddPackageAndPayment`.
 2. **BLL** — `IPackageService` (`GetActive()`, `GetById(int)`, Admin: `Create/Update/ToggleActive`); `ISubscriptionService` (chữ ký ở 1.3 + `ActivateOrRenew(int userId, int packageId)`); DTO `PackageDto`.
-3. **BLL** — `IPaymentService` → `VnPayService`: `string CreatePaymentUrl(int userId, int packageId, string clientIp)`, `PaymentResult HandleReturn(IQueryCollection query)` (xác thực chữ ký `vnp_SecureHash`, cập nhật `PaymentOrder`, gọi `ActivateOrRenew`).
-4. **UI** — trang Admin `Pages/Package/` (danh sách/tạo/sửa gói); trang Học sinh `Pages/Package/Buy` (xem gói + nút mua); `Pages/Payment/Return` (nhận callback VNPay, báo kết quả); `Pages/Package/Mine` (Gói của tôi + lịch sử `PaymentOrder`).
+3. **BLL** — `IPaymentService` → `MoMoService`: `Task<string> CreatePaymentUrl(int userId, int packageId, string clientIp)` (POST server→server tới MoMo lấy `payUrl`), `PaymentResult HandleReturn(IReadOnlyDictionary<string,string> momoParams)` (xác thực chữ ký HMAC-SHA256 theo thứ tự field cố định của MoMo, cập nhật `PaymentOrder`, gọi `ActivateOrRenew`).
+4. **UI** — trang Admin `Pages/Package/` (danh sách/tạo/sửa gói); trang Học sinh `Pages/Package/Buy` (xem gói + nút mua); `Pages/Payment/Return` (nhận callback MoMo, báo kết quả); `Pages/Package/Mine` (Gói của tôi + lịch sử `PaymentOrder`).
 5. **Seed** 3 gói: Free (0đ, 50k token, `flash-lite`), Basic (49k đ, 500k token, `flash-lite,flash`), Pro (99k đ, 2tr token, tất cả model).
-6. Đăng ký DI; cấu hình `Vnpay:TmnCode/HashSecret/BaseUrl/ReturnUrl` trong `appsettings.json` (secret để User Secrets).
+6. Đăng ký DI; cấu hình `Momo:PartnerCode/AccessKey/SecretKey/Endpoint/RedirectUrl` (sandbox có **creds test công khai** — chạy ngay không cần đăng ký; production mới cần đăng ký merchant).
 
-**Done khi:** mua gói ở sandbox → redirect VNPay → thanh toán thử → quay lại `Return` thấy "thành công", `UserSubscription` được tạo, `PaymentOrder=Paid`; Admin CRUD được gói.
+**Done khi:** mua gói ở sandbox → redirect MoMo → thanh toán thử → quay lại `Return` thấy "thành công", `UserSubscription` được tạo, `PaymentOrder=Paid`; Admin CRUD được gói.
 
 ## 3. Tân — Token & Chọn model
 
@@ -111,13 +111,13 @@ SubjectChunkConfig IChunkConfigService.GetForSubject(Guid subjectId); // trả m
 
 1. **Migration EF (dễ vỡ nhất):** ai thêm entity → `git pull main` → `dotnet ef migrations add <Ten> --project RagChatbot.DAL --startup-project RagChatbot.RazorPages` → `dotnet ef database update` → build/test → **push ngay + báo nhóm**. Đừng để 2 migration chưa merge cùng lúc. Nếu kẹt: xoá migration của mình, pull, tạo lại.
 2. **File dùng chung** (`ApplicationDbContext`, `ServiceCollectionExtensions`, `_Layout` nav): conflict nhỏ — luôn `git pull --rebase origin main` trước khi push.
-3. **Secret** (`appsettings.json`, VNPay HashSecret, Gemini key): để User Secrets / file gitignore. **Không commit.**
+3. **Secret** (`appsettings.json`, MoMo HashSecret, Gemini key): để User Secrets / file gitignore. **Không commit.**
 
 ## 7. Quy trình git (mỗi nhiệm vụ)
 
 ```bash
 git checkout main && git pull
-git checkout -b <mang>-<viec>-<ten>       # vd: goi-vnpay-service-baominh
+git checkout -b <mang>-<viec>-<ten>       # vd: goi-momo-service-baominh
 # ... code ...
 dotnet build && dotnet test               # xanh mới mở PR
 git add -A && git commit -m "feat(<mang>): <mô tả>"
