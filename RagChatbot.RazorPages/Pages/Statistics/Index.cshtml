@@ -1,0 +1,141 @@
+@page
+@model RagChatbot.RazorPages.Pages.Statistics.IndexModel
+@{
+    ViewData["Title"] = "Thống kê";
+}
+
+@if (Model.IsAdmin && Model.Admin != null)
+{
+    var a = Model.Admin;
+
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-4">
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="bi bi-cash-coin"></i></div>
+                <div class="stat-value">@a.TotalRevenue.ToString("N0") đ</div>
+                <div class="stat-label">Tổng doanh thu</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="stat-card">
+                <div class="stat-icon indigo"><i class="bi bi-bag-check"></i></div>
+                <div class="stat-value">@a.PaidOrders</div>
+                <div class="stat-label">Đơn đã thanh toán</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="stat-card">
+                <div class="stat-icon amber"><i class="bi bi-coin"></i></div>
+                <div class="stat-value">@a.TotalTokens.ToString("N0")</div>
+                <div class="stat-label">Tổng token đã dùng</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mb-3">
+        <a asp-page-handler="ExportCsv" class="btn-app btn-ghost"><i class="bi bi-download"></i> Xuất CSV</a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header-custom"><h5><i class="bi bi-graph-up-arrow text-success me-2"></i>Doanh thu 30 ngày</h5></div>
+                <div style="padding:20px 24px;"><canvas id="chartRevenue" height="230"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header-custom"><h5><i class="bi bi-pie-chart text-primary me-2"></i>Token theo model</h5></div>
+                <div style="padding:20px 24px;"><canvas id="chartTokenModel" height="230"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header-custom"><h5><i class="bi bi-bar-chart text-warning me-2"></i>Token 30 ngày</h5></div>
+                <div style="padding:20px 24px;"><canvas id="chartToken" height="200"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header-custom"><h5><i class="bi bi-box-seam text-primary me-2"></i>Doanh thu theo gói</h5></div>
+                <div style="padding:8px 24px 16px;">
+                    <table class="table table-hover" style="margin:0">
+                        <thead><tr><th>Gói</th><th>Số đơn</th><th class="text-end">Doanh thu</th></tr></thead>
+                        <tbody>
+                        @foreach (var p in a.RevenueByPackage)
+                        {
+                            <tr><td><strong>@p.Package</strong></td><td>@p.Orders</td><td class="text-end">@p.Amount.ToString("N0") đ</td></tr>
+                        }
+                        @if (!a.RevenueByPackage.Any())
+                        {
+                            <tr><td colspan="3" style="color:#6B7280">Chưa có doanh thu.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (Model.Lecturer != null)
+{
+    <div class="card">
+        <div class="card-header-custom"><h5><i class="bi bi-mortarboard text-primary me-2"></i>Thống kê theo môn của bạn</h5></div>
+        <div style="padding:8px 24px 20px">
+            <table class="table table-hover" style="margin:0">
+                <thead><tr><th>Môn</th><th>Số câu hỏi</th><th class="text-end">Token đã dùng</th></tr></thead>
+                <tbody>
+                @foreach (var s in Model.Lecturer.Subjects)
+                {
+                    <tr><td><strong>@s.Subject</strong></td><td>@s.Questions</td><td class="text-end">@s.Tokens.ToString("N0")</td></tr>
+                }
+                @if (!Model.Lecturer.Subjects.Any())
+                {
+                    <tr><td colspan="3" style="color:#6B7280">Bạn chưa phụ trách môn nào.</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+@if (Model.IsAdmin && Model.Admin != null)
+{
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const revLabels = @Json.Serialize(Model.Admin.RevenueByDay.Select(x => x.Label));
+            const revData   = @Json.Serialize(Model.Admin.RevenueByDay.Select(x => x.Amount));
+            const tokLabels = @Json.Serialize(Model.Admin.TokensByDay.Select(x => x.Label));
+            const tokData   = @Json.Serialize(Model.Admin.TokensByDay.Select(x => x.Tokens));
+            const modelLabels = @Json.Serialize(Model.Admin.TokensByModel.Select(x => x.Model));
+            const modelData   = @Json.Serialize(Model.Admin.TokensByModel.Select(x => x.Tokens));
+
+            const rev = document.getElementById('chartRevenue');
+            if (rev) new Chart(rev, {
+                type: 'line',
+                data: { labels: revLabels, datasets: [{ label: 'Doanh thu (đ)', data: revData, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,.12)', fill: true, tension: .3 }] },
+                options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+
+            const tok = document.getElementById('chartToken');
+            if (tok) new Chart(tok, {
+                type: 'bar',
+                data: { labels: tokLabels, datasets: [{ label: 'Token', data: tokData, backgroundColor: '#F59E0B', borderRadius: 6 }] },
+                options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+
+            const tm = document.getElementById('chartTokenModel');
+            if (tm && modelData.some(x => x > 0)) new Chart(tm, {
+                type: 'doughnut',
+                data: { labels: modelLabels, datasets: [{ data: modelData, backgroundColor: ['#6366F1', '#06B6D4', '#EF4444', '#F59E0B'] }] },
+                options: { cutout: '60%', plugins: { legend: { position: 'bottom' } } }
+            });
+        })();
+    </script>
+}
+}

@@ -31,6 +31,9 @@
             </div>
             <a asp-page="/Packages/Buy" class="btn-app btn-ghost mt-3"><i class="bi bi-arrow-up-circle"></i> Đổi / nâng gói</a>
         }
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid #eee;font-size:13.5px;color:#374151">
+            <i class="bi bi-coin text-warning me-1"></i> Token đã dùng tháng này: <strong>@Model.TokensThisMonth.ToString("N0")</strong>
+        </div>
     </div>
 </div>
 

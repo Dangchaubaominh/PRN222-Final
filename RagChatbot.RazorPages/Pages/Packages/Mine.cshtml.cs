@@ -14,13 +14,17 @@ namespace RagChatbot.RazorPages.Pages.Packages
         private readonly ISubscriptionService _subscriptionService;
         private readonly IPackageService _packageService;
         private readonly IPaymentService _paymentService;
+        private readonly ITokenUsageService _tokenUsage;
 
-        public MineModel(ISubscriptionService subscriptionService, IPackageService packageService, IPaymentService paymentService)
+        public MineModel(ISubscriptionService subscriptionService, IPackageService packageService, IPaymentService paymentService, ITokenUsageService tokenUsage)
         {
             _subscriptionService = subscriptionService;
             _packageService = packageService;
             _paymentService = paymentService;
+            _tokenUsage = tokenUsage;
         }
+
+        public long TokensThisMonth { get; set; }
 
         public UserSubscription? Current { get; set; }
         public string? CurrentPackageName { get; set; }
@@ -31,9 +35,13 @@ namespace RagChatbot.RazorPages.Pages.Packages
 
         private int UserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        public void OnGet()
+        public async Task OnGet()
         {
             PackageNames = _packageService.GetAll().ToDictionary(p => p.Id, p => p.Name);
+
+            var now = DateTime.UtcNow;
+            var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            TokensThisMonth = await _tokenUsage.TotalTokens(UserId, monthStart, now);
 
             Current = _subscriptionService.GetActive(UserId);
             if (Current != null)

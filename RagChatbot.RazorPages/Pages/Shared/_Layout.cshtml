@@ -67,6 +67,14 @@
             </a>
         }
 
+        @if (User.IsInRole("Admin") || User.IsInRole("Lecturer"))
+        {
+            <a class="nav-item-link @(IsArea("Statistics") ? "active" : "")"
+               asp-page="/Statistics/Index">
+                <i class="bi bi-graph-up"></i> Thống kê
+            </a>
+        }
+
         @if (User.IsInRole("Admin"))
         {
             <div class="sidebar-section">Quản trị</div>

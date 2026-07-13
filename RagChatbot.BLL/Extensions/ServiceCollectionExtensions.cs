@@ -51,6 +51,7 @@ namespace RagChatbot.BLL.Extensions
             services.AddScoped<ITokenUsageService, TokenUsageService>();
             services.AddScoped<IChunkConfigService, ChunkConfigService>();
             services.AddScoped<IBenchmarkService, BenchmarkService>();
+            services.AddScoped<IStatisticsService, StatisticsService>();
 
             return services;
         }
