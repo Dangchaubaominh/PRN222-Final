@@ -39,12 +39,22 @@
                             <li><i class="bi bi-cpu text-primary me-1"></i> @m</li>
                         }
                     </ul>
-                    <form method="post" asp-page-handler="Buy">
-                        <input type="hidden" name="packageId" value="@p.Id" />
-                        <button type="submit" class="btn-app btn-primary-app w-100" style="justify-content:center">
-                            <i class="bi bi-credit-card"></i> Mua qua MoMo
+                    @if (Model.Current != null && Model.Current.PackageId == p.Id)
+                    {
+                        <button type="button" class="btn-app btn-ghost w-100" style="justify-content:center" disabled>
+                            <i class="bi bi-check-circle-fill text-success"></i> Gói hiện tại
                         </button>
-                    </form>
+                    }
+                    else
+                    {
+                        <form method="post" asp-page-handler="Buy">
+                            <input type="hidden" name="packageId" value="@p.Id" />
+                            <button type="submit" class="btn-app btn-primary-app w-100" style="justify-content:center">
+                                <i class="bi bi-credit-card"></i>
+                                @(Model.Current != null ? "Chuyển gói này" : "Mua qua MoMo")
+                            </button>
+                        </form>
+                    }
                 </div>
             </div>
         </div>

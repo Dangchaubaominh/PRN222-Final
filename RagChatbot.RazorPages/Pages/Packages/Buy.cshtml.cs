@@ -47,6 +47,14 @@ namespace RagChatbot.RazorPages.Pages.Packages
             var pkg = _packageService.GetById(packageId);
             if (pkg == null) return RedirectToPage();
 
+            // Chặn mua lại đúng gói đang dùng
+            var active = _subscriptionService.GetActive(UserId);
+            if (active != null && active.PackageId == packageId)
+            {
+                TempData["WarningMessage"] = "Bạn đang sử dụng gói này rồi.";
+                return RedirectToPage("Mine");
+            }
+
             // Gói miễn phí: kích hoạt ngay, không qua cổng (MoMo yêu cầu số tiền > 0)
             if (pkg.Price <= 0)
             {
