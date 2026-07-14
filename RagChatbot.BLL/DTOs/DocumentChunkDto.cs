@@ -9,5 +9,6 @@ namespace RagChatbot.BLL.DTOs
         public int? PageNumber { get; set; }
         public string TextContent { get; set; }
         public int WordCount { get; set; }
+        public string? FileName { get; set; }  // tên tài liệu gốc (cho tìm kiếm semantic)
     }
 }

@@ -4,20 +4,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RagChatbot.BLL.DTOs;
 using RagChatbot.BLL.Services.Interfaces;
-using RagChatbot.DAL.Data;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace RagChatbot.RazorPages.Pages.Quiz
 {
     [Authorize]
     public class ResultModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IQuizService _quizService;
 
-        public ResultModel(ApplicationDbContext context)
+        public ResultModel(IQuizService quizService)
         {
-            _context = context;
+            _quizService = quizService;
         }
 
         public QuizResultDto Result { get; set; }
@@ -25,38 +22,12 @@ namespace RagChatbot.RazorPages.Pages.Quiz
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var qr = await _context.QuizResults
-                .Include(r => r.Quiz)
-                .ThenInclude(q => q.Questions)
-                .FirstOrDefaultAsync(r => r.Id == id);
+            // Toàn bộ truy vấn dữ liệu đi qua BLL (không chạm DbContext trực tiếp)
+            var detail = await _quizService.GetResultDetailAsync(id);
+            if (detail == null) return NotFound();
 
-            if (qr == null) return NotFound();
-
-            Result = new QuizResultDto
-            {
-                Id = qr.Id,
-                QuizId = qr.QuizId,
-                UserId = qr.UserId,
-                Score = qr.Score,
-                TotalQuestions = qr.TotalQuestions,
-                CompletedAt = qr.CompletedAt
-            };
-
-            QuizInfo = new QuizDto
-            {
-                Title = qr.Quiz.Title,
-                Questions = qr.Quiz.Questions.Select(q => new QuizQuestionDto
-                {
-                    Content = q.Content,
-                    OptionA = q.OptionA,
-                    OptionB = q.OptionB,
-                    OptionC = q.OptionC,
-                    OptionD = q.OptionD,
-                    CorrectOption = q.CorrectOption,
-                    Explanation = q.Explanation
-                }).ToList()
-            };
-
+            Result = detail.Value.Result;
+            QuizInfo = detail.Value.Quiz;
             return Page();
         }
     }

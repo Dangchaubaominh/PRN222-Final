@@ -14,11 +14,13 @@ namespace RagChatbot.BLL.Services.Implements
     {
         private readonly IDocumentRepository _documentRepository;
         private readonly IDocumentChunkRepository _chunkRepository;
+        private readonly IAIService _aiService;
 
-        public DocumentService(IDocumentRepository documentRepository, IDocumentChunkRepository chunkRepository)
+        public DocumentService(IDocumentRepository documentRepository, IDocumentChunkRepository chunkRepository, IAIService aiService)
         {
             _documentRepository = documentRepository;
             _chunkRepository = chunkRepository;
+            _aiService = aiService;
         }
 
         public IEnumerable<DocumentDto> GetDocumentsBySubject(Guid subjectId, int currentUserId, string currentUserRole)
@@ -83,6 +85,25 @@ namespace RagChatbot.BLL.Services.Implements
         }
 
         public int CountAllDocuments() => _documentRepository.CountAll();
+
+        public async Task<IEnumerable<DocumentChunkDto>> SearchChunksAsync(Guid subjectId, string query, int currentUserId, string currentUserRole, int topK = 10)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return Enumerable.Empty<DocumentChunkDto>();
+
+            float[] vector = await _aiService.GenerateEmbeddingAsync(query);
+            var chunks = await _chunkRepository.SearchSimilarChunksAsync(subjectId, vector, currentUserId, currentUserRole, topK);
+
+            return chunks.Select((c, i) => new DocumentChunkDto
+            {
+                Id          = c.Id,
+                Index       = c.ChunkIndex ?? i + 1,
+                PageNumber  = c.PageNumber,
+                TextContent = c.TextContent,
+                WordCount   = c.TextContent?.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length ?? 0,
+                FileName    = c.Document?.FileName
+            });
+        }
 
         public bool DeleteDocument(Guid id, string rootPath)
         {

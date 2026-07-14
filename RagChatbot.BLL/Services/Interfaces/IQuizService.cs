@@ -12,5 +12,8 @@ namespace RagChatbot.BLL.Services.Interfaces
         Task<List<QuizDto>> GetQuizzesByDocumentAsync(Guid documentId);
         Task<QuizResultDto> SubmitQuizAsync(int quizId, int userId, Dictionary<int, string> answers);
         Task<List<QuizResultDto>> GetUserQuizResultsAsync(int userId, Guid? documentId = null);
+
+        // Chi tiết 1 kết quả làm bài (kèm quiz + câu hỏi + đáp án) — cho trang Result
+        Task<(QuizResultDto Result, QuizDto Quiz)?> GetResultDetailAsync(int resultId);
     }
 }

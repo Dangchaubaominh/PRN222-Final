@@ -25,6 +25,43 @@ namespace RagChatbot.BLL.Services.Implements
             _chunkRepo = chunkRepo;
         }
 
+        public async Task<(QuizResultDto Result, QuizDto Quiz)?> GetResultDetailAsync(int resultId)
+        {
+            var qr = await _context.QuizResults
+                .Include(r => r.Quiz)
+                .ThenInclude(q => q.Questions)
+                .FirstOrDefaultAsync(r => r.Id == resultId);
+
+            if (qr == null) return null;
+
+            var result = new QuizResultDto
+            {
+                Id = qr.Id,
+                QuizId = qr.QuizId,
+                UserId = qr.UserId,
+                Score = qr.Score,
+                TotalQuestions = qr.TotalQuestions,
+                CompletedAt = qr.CompletedAt
+            };
+
+            var quiz = new QuizDto
+            {
+                Title = qr.Quiz.Title,
+                Questions = qr.Quiz.Questions.Select(q => new QuizQuestionDto
+                {
+                    Content = q.Content,
+                    OptionA = q.OptionA,
+                    OptionB = q.OptionB,
+                    OptionC = q.OptionC,
+                    OptionD = q.OptionD,
+                    CorrectOption = q.CorrectOption,
+                    Explanation = q.Explanation
+                }).ToList()
+            };
+
+            return (result, quiz);
+        }
+
         public async Task<QuizDto> GenerateQuizAsync(Guid documentId, int numberOfQuestions, int userId)
         {
             // Lấy các chunk của document (giới hạn một số lượng để tránh quá dài)

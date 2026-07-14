@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 using RagChatbot.BLL.DTOs;
 using RagChatbot.BLL.Services.Interfaces;
-using RagChatbot.DAL.Repositories.Interfaces;
-using RagChatbot.DAL.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -15,19 +13,16 @@ namespace RagChatbot.RazorPages.Pages.Document
     [Authorize]
     public class SearchModel : PageModel
     {
-        private readonly IAIService _aiService;
-        private readonly IDocumentChunkRepository _chunkRepo;
+        private readonly IDocumentService _documentService;
         private readonly ISubjectService _subjectService;
         private readonly IUserSubjectService _userSubjectService;
 
         public SearchModel(
-            IAIService aiService,
-            IDocumentChunkRepository chunkRepo,
+            IDocumentService documentService,
             ISubjectService subjectService,
             IUserSubjectService userSubjectService)
         {
-            _aiService = aiService;
-            _chunkRepo = chunkRepo;
+            _documentService = documentService;
             _subjectService = subjectService;
             _userSubjectService = userSubjectService;
         }
@@ -39,8 +34,8 @@ namespace RagChatbot.RazorPages.Pages.Document
         public string? Query { get; set; }
 
         public SubjectDto? Subject { get; set; }
-        
-        public IEnumerable<DocumentChunk> Results { get; set; } = new List<DocumentChunk>();
+
+        public IEnumerable<DocumentChunkDto> Results { get; set; } = new List<DocumentChunkDto>();
 
         private bool CanAccess(Guid subjectId)
         {
@@ -60,11 +55,8 @@ namespace RagChatbot.RazorPages.Pages.Document
                 int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
                 string role = User.FindFirstValue(ClaimTypes.Role) ?? "";
 
-                // Nhúng query thành vector
-                float[] vector = await _aiService.GenerateEmbeddingAsync(Query);
-
-                // Tìm kiếm vector
-                Results = await _chunkRepo.SearchSimilarChunksAsync(SubjectId, vector, userId, role, topK: 10);
+                // Nhúng query + tìm kiếm semantic — toàn bộ qua BLL (không chạm DAL trực tiếp)
+                Results = await _documentService.SearchChunksAsync(SubjectId, Query, userId, role, topK: 10);
             }
 
             return Page();

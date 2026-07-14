@@ -25,5 +25,8 @@ namespace RagChatbot.BLL.Services.Interfaces
 
         // Lấy danh sách các chunk đã được chia từ tài liệu
         IEnumerable<DocumentChunkDto> GetChunksByDocumentId(Guid documentId);
+
+        // Tìm kiếm semantic: nhúng câu hỏi rồi tìm chunk tương tự nhất (lọc quyền theo role)
+        Task<IEnumerable<DocumentChunkDto>> SearchChunksAsync(Guid subjectId, string query, int currentUserId, string currentUserRole, int topK = 10);
     }
 }
