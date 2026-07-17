@@ -86,6 +86,10 @@
                asp-page="/Packages/Index">
                 <i class="bi bi-box-seam"></i> Quản lý gói
             </a>
+            <a class="nav-item-link @(IsArea("Benchmark") ? "active" : "")"
+               asp-page="/Benchmark/Index">
+                <i class="bi bi-speedometer2"></i> Benchmark
+            </a>
         }
     </nav>
 

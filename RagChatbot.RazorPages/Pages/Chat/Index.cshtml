@@ -430,7 +430,16 @@
             btn.style.marginLeft = 'auto';
             btn.style.fontSize = '11px';
             btn.style.padding = '2px 8px';
-            btn.href = '/Document/ViewDoc?id=' + source.documentId;
+
+            let href = '/Document/ViewDoc?id=' + source.documentId;
+            if (source.pageNumber) {
+                href += '&pageNumber=' + source.pageNumber;
+            }
+            if (source.chunkIndex) {
+                href += '&chunkIndex=' + source.chunkIndex;
+            }
+            btn.href = href;
+
             btn.target = '_blank';
             btn.innerHTML = '<i class="bi bi-box-arrow-up-right"></i> Mở tài liệu';
             meta.appendChild(btn);

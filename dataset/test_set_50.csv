@@ -1,0 +1,51 @@
+﻿Question,Ground Truth,Chapter,Difficulty,Question Type,Page Reference
+Lớp nào là lớp cơ bản abstract cung cấp thông tin liên quan đến một tập tin hoặc thư mục trong .NET?,Lớp FileSystemInfo.,Chương 1,Dễ,Kiến thức,30
+Hai lớp nào dùng để đọc và viết dữ liệu nhị phân nguyên sinh?,BinaryReader và BinaryWriter.,Chương 1,Dễ,Kiến thức,28
+Lớp nào cung cấp chỗ trữ tạm thời cho một dòng dữ liệu kiểu bytes?,BufferedStream.,Chương 1,Trung bình,Khái niệm,28
+Hàm hành sự nào của FileInfo dùng để tạo một đối tượng StreamReader đọc từ một tập tin văn bản hiện hữu?,OpenText().,Chương 1,Trung bình,Kiến thức,42
+Thuộc tính nào của lớp MemoryStream cho biết số bytes sẽ được cấp phát cho stream?,Capacity.,Chương 1,Dễ,Kiến thức,58
+Tình trạng đối tượng (state object) trong quá trình đọc bất đồng bộ (Asynchronous I/O) có bắt buộc không?,"Không, nó là tùy chọn.",Chương 1,Khó,Khái niệm,72
+Lớp nào xây dựng trên lớp Socket để cung cấp những dịch vụ cao cấp TCP/IP cho việc nghe ngóng kết nối?,TcpListener.,Chương 1,Trung bình,Kiến thức,78
+Serialization (sản sinh hàng loạt) là gì?,Là tiến trình chuyển đổi trạng thái của một đối tượng thành một loạt bytes tuyến tính ghi ra stream.,Chương 1,Khó,Định nghĩa,92
+Attribute nào được dùng để đánh dấu một biến thành viên không tham gia vào quá trình serialization?,[NonSerialized].,Chương 1,Trung bình,Kiến thức,94
+Isolated storage cung cấp chức năng tương tự như tập tin nào trên Windows?,Các tập tin .ini hoặc key HKEY_CURRENT_USER trên Windows Registry.,Chương 1,Khó,Khái niệm,106
+Lớp nào là gốc rễ của phần lớn các lớp thuộc namespace System.Windows.Forms?,Lớp Control.,Chương 2,Dễ,Kiến thức,124
+Thuộc tính nào của lớp Form cho biết vị trí xuất phát của biểu mẫu lúc chạy?,StartPosition.,Chương 2,Dễ,Kiến thức,160
+Sự kiện (tình huống) nào xảy ra khi một biểu mẫu sắp sửa bị đóng lại?,Closing.,Chương 2,Trung bình,Kiến thức,161
+Lớp nào cung cấp chức năng quản lý một hệ thống trình đơn popup (shortcut menu)?,ContextMenu.,Chương 2,Trung bình,Kiến thức,169
+Thuộc tính nào của lớp ToolBar ấn định kích thước của một button trên thanh công cụ?,ButtonSize.,Chương 2,Dễ,Kiến thức,184
+Phương thức nào của lớp Control dùng để ép ô control tự vẽ lại bằng cách ép một thông điệp vẽ vào hàng nối đuôi?,Invalidate().,Chương 2,Khó,Khái niệm,144
+Assembly manifest là gì?,"Là metadata mô tả trọn vẹn assembly bao gồm tên, phiên bản, các tập tin, và các assembly được qui chiếu.",Chương 3,Trung bình,Định nghĩa,232
+Các tập tin PE (Portable Executable) của .NET chứa mã máy thô hay mã trung gian?,Chứa đoạn mã viết theo ngôn ngữ trung gian MSIL.,Chương 3,Khó,Khái niệm,230
+Nơi nào trong hệ thống dùng để trữ các shared assembly?,Global Assembly Cache (GAC).,Chương 3,Dễ,Kiến thức,265
+Một con số phiên bản assembly gồm mấy phần và đó là những phần nào?,"Gồm 4 phần: major, minor, build, revision.",Chương 3,Trung bình,Khái niệm,267
+Trình tiện ích nào dùng để kết sinh một strong name cho assembly?,sn.exe.,Chương 3,Dễ,Kiến thức,269
+Lớp nào là gốc rễ của các lớp reflection trong .NET?,Lớp Type.,Chương 4,Dễ,Kiến thức,293
+Kỹ thuật nào cho phép triệu gọi một hàm hành sự vào lúc chạy thay vì vào lúc biên dịch?,Triệu gọi động trễ (late binding).,Chương 4,Trung bình,Khái niệm,308
+Hàm hành sự nào của lớp Activator dùng để nạp động một thể hiện của lớp từ một đối tượng Type?,CreateInstance().,Chương 4,Trung bình,Kiến thức,308
+AttributeUsage dùng để làm gì?,"Là một meta-attribute dùng để cung cấp metadata cho một custom attribute, chỉ định target của attribute đó.",Chương 4,Khó,Khái niệm,284
+Namespace nào cung cấp chức năng tạo động một assembly vào lúc chạy (on the fly)?,System.Reflection.Emit.,Chương 4,Khó,Kiến thức,311
+Lớp nào trong Reflection Emit được dùng để tạo ngôn ngữ trung gian (IL) nằm sau đối với một thành viên?,ILGenerator.,Chương 4,Khó,Khái niệm,312
+Khái niệm Remoting trong .NET là gì?,Là tiến trình di chuyển một đối tượng xuyên qua một ranh giới process hoặc máy tính.,Chương 5,Trung bình,Định nghĩa,342
+Một Application Domain (AppDomain) là gì?,Là một ranh giới cách ly các ứng dụng trong cùng một process.,Chương 5,Khó,Định nghĩa,344
+Hai loại formatter mặc nhiên được .NET Framework cung cấp cho Remoting là gì?,SOAP Formatter và Binary Formatter.,Chương 5,Trung bình,Kiến thức,350
+Lớp nào tượng trưng cho proxy phía client khi marshal theo qui chiếu?,RealProxy hoặc Transparent proxy.,Chương 5,Khó,Khái niệm,350
+Đối tượng well-known client-activated khác với well-known đối tượng như thế nào?,"Client-activated duy trì kết nối lâu dài cho tới khi nhu cầu thỏa mãn, well-known thiết lập kết nối mỗi lần có thông điệp.",Chương 5,Khó,Khái niệm,358
+Đăng ký một well-known service kiểu Singleton có nghĩa là gì?,Tất cả thông điệp từ mọi khách hàng sẽ được chuyển cho một đối tượng đơn độc chạy trên server.,Chương 5,Trung bình,Khái niệm,358
+Mạch trình (thread) là gì?,Là những process nhẹ cân chịu trách nhiệm thực hiện đa nhiệm trong lòng một ứng dụng.,Chương 6,Dễ,Định nghĩa,370
+Lớp nào cung cấp chức năng đồng bộ hóa các đối tượng mạch trình sử dụng khóa chốt (lock) và tín hiệu chờ (wait/signal)?,Lớp Monitor.,Chương 6,Trung bình,Kiến thức,372
+Delegate nào được dùng để chỉ định hàm hành sự thi hành đầu tiên khi một mạch trình bắt đầu?,ThreadStart.,Chương 6,Trung bình,Kiến thức,372
+Hàm hành sự nào của lớp Thread dùng để bắt mạch trình ngủ yên trong một khoảng thời gian?,Sleep().,Chương 6,Dễ,Kiến thức,372
+Deadlock (chết chùm) xảy ra khi nào?,Khi hai hoặc nhiều mạch trình người này chờ người kia giải phóng nguồn lực và không người nào rảnh cả.,Chương 6,Khó,Định nghĩa,394
+Lớp Interlocked cung cấp hai hàm hành sự cốt lõi nào để tăng giảm biến đồng bộ?,Increment và Decrement.,Chương 6,Trung bình,Kiến thức,386
+Dịch vụ nào cho phép managed code triệu gọi các hàm unmanaged được thi công trên một DLL viết theo C (Win32 API)?,PInvoke (Platform Invocation).,Chương 7,Khó,Kiến thức,399
+Thuộc tính nào của DllImportAttribute dùng để thiết lập qui ước triệu gọi (calling convention)?,CallingConvention.,Chương 7,Trung bình,Kiến thức,400
+Trình tiện ích nào dùng để tạo một proxy RCW từ một COM type library?,tlbimp.exe.,Chương 7,Khó,Kiến thức,404
+CCW (COM Callable Wrapper) làm nhiệm vụ gì?,Là proxy để một COM client có thể gọi và sử dụng các kiểu dữ liệu .NET.,Chương 7,Khó,Định nghĩa,453
+Các assembly .NET được đăng ký lên system registry cho COM sử dụng bằng công cụ nào?,Regasm.exe.,Chương 7,Trung bình,Kiến thức,453
+Web Forms chia giao diện người sử dụng thành 2 phần nào?,Phần nhìn thấy được UI (Visual UI) và phần logic code-behind.,Chương 8,Trung bình,Khái niệm,482
+Tình huống nào được phát pháo mỗi lần biểu mẫu Web được nạp vào?,Page_Load.,Chương 8,Dễ,Kiến thức,550
+Lớp nào cho phép chia sẻ thông tin toàn cục giữa nhiều session trong một ứng dụng ASP.NET?,HttpApplicationState.,Chương 8,Trung bình,Kiến thức,511
+"Để kiểm tra xem trang Web được nạp vào đáp ứng một client postback hay là truy cập lần đầu, ta dùng thuộc tính nào của Page?",IsPostBack.,Chương 8,Trung bình,Kiến thức,520
+Web Service sử dụng ngôn ngữ mô tả nào để khách hàng biết dịch vụ có thể làm được gì?,WSDL (Web Service Description Language).,Chương 9,Trung bình,Kiến thức,558
+Attribute nào phải được áp dụng cho mỗi hàm hành sự để nó có thể được triệu gọi từ xa thông qua HTTP?,[WebMethod].,Chương 9,Dễ,Kiến thức,564

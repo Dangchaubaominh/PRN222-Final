@@ -70,10 +70,22 @@ namespace RagChatbot.RazorPages.Pages.Benchmark
                 return RedirectToPage("/Auth/Login");
             }
 
-            var questionList = Input.QuestionsText
+            var lines = Input.QuestionsText
                 .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(q => !string.IsNullOrWhiteSpace(q))
                 .ToList();
+
+            var questionList = new List<(string Question, string GroundTruth)>();
+            foreach (var line in lines)
+            {
+                var parts = line.Split('|', 2);
+                string q = parts[0].Trim();
+                string gt = parts.Length > 1 ? parts[1].Trim() : "";
+                if (!string.IsNullOrEmpty(q))
+                {
+                    questionList.Add((q, gt));
+                }
+            }
 
             if (questionList.Count == 0 || Input.SelectedModels == null || Input.SelectedModels.Count == 0)
             {

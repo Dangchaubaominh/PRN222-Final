@@ -1,0 +1,202 @@
+[
+    {
+        "question": "Lớp nào là lớp cơ bản abstract cung cấp thông tin liên quan đến một tập tin hoặc thư mục trong .NET?",
+        "ground_truth": "Lớp FileSystemInfo."
+    },
+    {
+        "question": "Hai lớp nào dùng để đọc và viết dữ liệu nhị phân nguyên sinh?",
+        "ground_truth": "BinaryReader và BinaryWriter."
+    },
+    {
+        "question": "Lớp nào cung cấp chỗ trữ tạm thời cho một dòng dữ liệu kiểu bytes?",
+        "ground_truth": "BufferedStream."
+    },
+    {
+        "question": "Hàm hành sự nào của FileInfo dùng để tạo một đối tượng StreamReader đọc từ một tập tin văn bản hiện hữu?",
+        "ground_truth": "OpenText()."
+    },
+    {
+        "question": "Thuộc tính nào của lớp MemoryStream cho biết số bytes sẽ được cấp phát cho stream?",
+        "ground_truth": "Capacity."
+    },
+    {
+        "question": "Tình trạng đối tượng (state object) trong quá trình đọc bất đồng bộ (Asynchronous I/O) có bắt buộc không?",
+        "ground_truth": "Không, nó là tùy chọn."
+    },
+    {
+        "question": "Lớp nào xây dựng trên lớp Socket để cung cấp những dịch vụ cao cấp TCP/IP cho việc nghe ngóng kết nối?",
+        "ground_truth": "TcpListener."
+    },
+    {
+        "question": "Serialization (sản sinh hàng loạt) là gì?",
+        "ground_truth": "Là tiến trình chuyển đổi trạng thái của một đối tượng thành một loạt bytes tuyến tính ghi ra stream."
+    },
+    {
+        "question": "Attribute nào được dùng để đánh dấu một biến thành viên không tham gia vào quá trình serialization?",
+        "ground_truth": "[NonSerialized]."
+    },
+    {
+        "question": "Isolated storage cung cấp chức năng tương tự như tập tin nào trên Windows?",
+        "ground_truth": "Các tập tin .ini hoặc key HKEY_CURRENT_USER trên Windows Registry."
+    },
+    {
+        "question": "Lớp nào là gốc rễ của phần lớn các lớp thuộc namespace System.Windows.Forms?",
+        "ground_truth": "Lớp Control."
+    },
+    {
+        "question": "Thuộc tính nào của lớp Form cho biết vị trí xuất phát của biểu mẫu lúc chạy?",
+        "ground_truth": "StartPosition."
+    },
+    {
+        "question": "Sự kiện (tình huống) nào xảy ra khi một biểu mẫu sắp sửa bị đóng lại?",
+        "ground_truth": "Closing."
+    },
+    {
+        "question": "Lớp nào cung cấp chức năng quản lý một hệ thống trình đơn popup (shortcut menu)?",
+        "ground_truth": "ContextMenu."
+    },
+    {
+        "question": "Thuộc tính nào của lớp ToolBar ấn định kích thước của một button trên thanh công cụ?",
+        "ground_truth": "ButtonSize."
+    },
+    {
+        "question": "Phương thức nào của lớp Control dùng để ép ô control tự vẽ lại bằng cách ép một thông điệp vẽ vào hàng nối đuôi?",
+        "ground_truth": "Invalidate()."
+    },
+    {
+        "question": "Assembly manifest là gì?",
+        "ground_truth": "Là metadata mô tả trọn vẹn assembly bao gồm tên, phiên bản, các tập tin, và các assembly được qui chiếu."
+    },
+    {
+        "question": "Các tập tin PE (Portable Executable) của .NET chứa mã máy thô hay mã trung gian?",
+        "ground_truth": "Chứa đoạn mã viết theo ngôn ngữ trung gian MSIL."
+    },
+    {
+        "question": "Nơi nào trong hệ thống dùng để trữ các shared assembly?",
+        "ground_truth": "Global Assembly Cache (GAC)."
+    },
+    {
+        "question": "Một con số phiên bản assembly gồm mấy phần và đó là những phần nào?",
+        "ground_truth": "Gồm 4 phần: major, minor, build, revision."
+    },
+    {
+        "question": "Trình tiện ích nào dùng để kết sinh một strong name cho assembly?",
+        "ground_truth": "sn.exe."
+    },
+    {
+        "question": "Lớp nào là gốc rễ của các lớp reflection trong .NET?",
+        "ground_truth": "Lớp Type."
+    },
+    {
+        "question": "Kỹ thuật nào cho phép triệu gọi một hàm hành sự vào lúc chạy thay vì vào lúc biên dịch?",
+        "ground_truth": "Triệu gọi động trễ (late binding)."
+    },
+    {
+        "question": "Hàm hành sự nào của lớp Activator dùng để nạp động một thể hiện của lớp từ một đối tượng Type?",
+        "ground_truth": "CreateInstance()."
+    },
+    {
+        "question": "AttributeUsage dùng để làm gì?",
+        "ground_truth": "Là một meta-attribute dùng để cung cấp metadata cho một custom attribute, chỉ định target của attribute đó."
+    },
+    {
+        "question": "Namespace nào cung cấp chức năng tạo động một assembly vào lúc chạy (on the fly)?",
+        "ground_truth": "System.Reflection.Emit."
+    },
+    {
+        "question": "Lớp nào trong Reflection Emit được dùng để tạo ngôn ngữ trung gian (IL) nằm sau đối với một thành viên?",
+        "ground_truth": "ILGenerator."
+    },
+    {
+        "question": "Khái niệm Remoting trong .NET là gì?",
+        "ground_truth": "Là tiến trình di chuyển một đối tượng xuyên qua một ranh giới process hoặc máy tính."
+    },
+    {
+        "question": "Một Application Domain (AppDomain) là gì?",
+        "ground_truth": "Là một ranh giới cách ly các ứng dụng trong cùng một process."
+    },
+    {
+        "question": "Hai loại formatter mặc nhiên được .NET Framework cung cấp cho Remoting là gì?",
+        "ground_truth": "SOAP Formatter và Binary Formatter."
+    },
+    {
+        "question": "Lớp nào tượng trưng cho proxy phía client khi marshal theo qui chiếu?",
+        "ground_truth": "RealProxy hoặc Transparent proxy."
+    },
+    {
+        "question": "Đối tượng well-known client-activated khác với well-known đối tượng như thế nào?",
+        "ground_truth": "Client-activated duy trì kết nối lâu dài cho tới khi nhu cầu thỏa mãn, well-known thiết lập kết nối mỗi lần có thông điệp."
+    },
+    {
+        "question": "Đăng ký một well-known service kiểu Singleton có nghĩa là gì?",
+        "ground_truth": "Tất cả thông điệp từ mọi khách hàng sẽ được chuyển cho một đối tượng đơn độc chạy trên server."
+    },
+    {
+        "question": "Mạch trình (thread) là gì?",
+        "ground_truth": "Là những process nhẹ cân chịu trách nhiệm thực hiện đa nhiệm trong lòng một ứng dụng."
+    },
+    {
+        "question": "Lớp nào cung cấp chức năng đồng bộ hóa các đối tượng mạch trình sử dụng khóa chốt (lock) và tín hiệu chờ (wait/signal)?",
+        "ground_truth": "Lớp Monitor."
+    },
+    {
+        "question": "Delegate nào được dùng để chỉ định hàm hành sự thi hành đầu tiên khi một mạch trình bắt đầu?",
+        "ground_truth": "ThreadStart."
+    },
+    {
+        "question": "Hàm hành sự nào của lớp Thread dùng để bắt mạch trình ngủ yên trong một khoảng thời gian?",
+        "ground_truth": "Sleep()."
+    },
+    {
+        "question": "Deadlock (chết chùm) xảy ra khi nào?",
+        "ground_truth": "Khi hai hoặc nhiều mạch trình người này chờ người kia giải phóng nguồn lực và không người nào rảnh cả."
+    },
+    {
+        "question": "Lớp Interlocked cung cấp hai hàm hành sự cốt lõi nào để tăng giảm biến đồng bộ?",
+        "ground_truth": "Increment và Decrement."
+    },
+    {
+        "question": "Dịch vụ nào cho phép managed code triệu gọi các hàm unmanaged được thi công trên một DLL viết theo C (Win32 API)?",
+        "ground_truth": "PInvoke (Platform Invocation)."
+    },
+    {
+        "question": "Thuộc tính nào của DllImportAttribute dùng để thiết lập qui ước triệu gọi (calling convention)?",
+        "ground_truth": "CallingConvention."
+    },
+    {
+        "question": "Trình tiện ích nào dùng để tạo một proxy RCW từ một COM type library?",
+        "ground_truth": "tlbimp.exe."
+    },
+    {
+        "question": "CCW (COM Callable Wrapper) làm nhiệm vụ gì?",
+        "ground_truth": "Là proxy để một COM client có thể gọi và sử dụng các kiểu dữ liệu .NET."
+    },
+    {
+        "question": "Các assembly .NET được đăng ký lên system registry cho COM sử dụng bằng công cụ nào?",
+        "ground_truth": "Regasm.exe."
+    },
+    {
+        "question": "Web Forms chia giao diện người sử dụng thành 2 phần nào?",
+        "ground_truth": "Phần nhìn thấy được UI (Visual UI) và phần logic code-behind."
+    },
+    {
+        "question": "Tình huống nào được phát pháo mỗi lần biểu mẫu Web được nạp vào?",
+        "ground_truth": "Page_Load."
+    },
+    {
+        "question": "Lớp nào cho phép chia sẻ thông tin toàn cục giữa nhiều session trong một ứng dụng ASP.NET?",
+        "ground_truth": "HttpApplicationState."
+    },
+    {
+        "question": "Để kiểm tra xem trang Web được nạp vào đáp ứng một client postback hay là truy cập lần đầu, ta dùng thuộc tính nào của Page?",
+        "ground_truth": "IsPostBack."
+    },
+    {
+        "question": "Web Service sử dụng ngôn ngữ mô tả nào để khách hàng biết dịch vụ có thể làm được gì?",
+        "ground_truth": "WSDL (Web Service Description Language)."
+    },
+    {
+        "question": "Attribute nào phải được áp dụng cho mỗi hàm hành sự để nó có thể được triệu gọi từ xa thông qua HTTP?",
+        "ground_truth": "[WebMethod]."
+    }
+]

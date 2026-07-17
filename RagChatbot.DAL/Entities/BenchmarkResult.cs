@@ -21,6 +21,22 @@ namespace RagChatbot.DAL.Entities
         [Required]
         public string Answer { get; set; }
 
+        public string? GroundTruth { get; set; }
+
+        public string? ContextRetrieved { get; set; }
+
+        [Column(TypeName = "decimal(5, 4)")]
+        public decimal? Faithfulness { get; set; }
+
+        [Column(TypeName = "decimal(5, 4)")]
+        public decimal? AnswerRelevancy { get; set; }
+
+        [Column(TypeName = "decimal(5, 4)")]
+        public decimal? ContextPrecision { get; set; }
+
+        [Column(TypeName = "decimal(5, 4)")]
+        public decimal? ContextRecall { get; set; }
+
         public int LatencyMs { get; set; }
 
         public int TotalTokens { get; set; }

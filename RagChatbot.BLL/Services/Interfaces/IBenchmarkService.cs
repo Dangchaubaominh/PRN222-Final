@@ -7,7 +7,7 @@ namespace RagChatbot.BLL.Services.Interfaces
 {
     public interface IBenchmarkService
     {
-        Task<BenchmarkRun> RunAsync(int adminId, Guid? subjectId, List<string> questions, List<string> models);
+        Task<BenchmarkRun> RunAsync(int adminId, Guid? subjectId, List<(string Question, string GroundTruth)> questions, List<string> models);
         Task<List<BenchmarkRun>> GetAllRunsAsync();
         Task<BenchmarkRun?> GetRunByIdAsync(int id);
     }

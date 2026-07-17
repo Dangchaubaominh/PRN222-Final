@@ -26,6 +26,12 @@ namespace RagChatbot.RazorPages.Pages.Document
         public List<DocumentChunkDto> Chunks { get; set; } = new();
         public int TotalWords { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int? PageNumber { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? ChunkIndex { get; set; }
+
         private bool CanAccess(Guid subjectId)
         {
             if (User.IsInRole("Admin")) return true;

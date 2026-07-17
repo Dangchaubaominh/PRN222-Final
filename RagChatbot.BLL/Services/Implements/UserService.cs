@@ -11,10 +11,12 @@ namespace RagChatbot.BLL.Services.Implements
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly ISubscriptionRepository _subRepo;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, ISubscriptionRepository subRepo)
         {
             _userRepository = userRepository;
+            _subRepo = subRepo;
         }
 
         public UserDto Authenticate(string username, string password)
@@ -117,6 +119,17 @@ namespace RagChatbot.BLL.Services.Implements
                 Email    = dto.Email
             };
             _userRepository.Add(entity);
+
+            _subRepo.Add(new UserSubscription
+            {
+                UserId = entity.Id,
+                PackageId = 1, // Free package
+                StartAt = DateTime.UtcNow,
+                ExpireAt = DateTime.UtcNow.AddDays(30),
+                TokensUsed = 0,
+                Status = "Active"
+            });
+
             return true;
         }
 

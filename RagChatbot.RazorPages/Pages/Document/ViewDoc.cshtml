@@ -59,7 +59,12 @@
     <div class="card" style="overflow:hidden;height:calc(100vh - var(--topbar-height) - 210px)">
         @if (ext == ".pdf")
         {
-            <iframe src="@doc.FilePath" style="width:100%;height:100%;border:none;display:block"></iframe>
+            var pdfUrl = doc.FilePath;
+            if (Model.PageNumber.HasValue)
+            {
+                pdfUrl += $"#page={Model.PageNumber.Value}";
+            }
+            <iframe src="@pdfUrl" style="width:100%;height:100%;border:none;display:block"></iframe>
         }
         else if (ext == ".txt")
         {
@@ -381,6 +386,33 @@ function showFull(index, btn) {
     preview.classList.add('d-none');
     btn.classList.add('d-none');
     full.classList.remove('d-none');
+}
+
+@if (Model.ChunkIndex.HasValue)
+{
+<text>
+document.addEventListener("DOMContentLoaded", function() {
+    var tabBtn = document.querySelectorAll('.vd-tab')[1]; // Tab Chunks
+    if (tabBtn) {
+        switchTab('chunks', tabBtn);
+    }
+    var chunkCard = document.getElementById('chunk-@Model.ChunkIndex.Value');
+    if (chunkCard) {
+        var body = document.getElementById('body-@Model.ChunkIndex.Value');
+        var chev = document.getElementById('chev-@Model.ChunkIndex.Value');
+        if (body && chev) {
+            body.classList.remove('d-none');
+            chev.classList.add('open');
+        }
+        chunkCard.style.border = "2px solid var(--primary)";
+        chunkCard.style.boxShadow = "0 0 15px rgba(99,102,241,0.5)";
+        
+        setTimeout(function() {
+            chunkCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
+});
+</text>
 }
 </script>
 }

@@ -1,0 +1,128 @@
+import os
+import json
+import csv
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+phase1_data = [
+    {"Question": "Lớp nào là lớp cơ bản abstract cung cấp thông tin liên quan đến một tập tin hoặc thư mục trong .NET?", "Ground Truth": "Lớp FileSystemInfo.", "Chapter": "Chương 1", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "30"},
+    {"Question": "Hai lớp nào dùng để đọc và viết dữ liệu nhị phân nguyên sinh?", "Ground Truth": "BinaryReader và BinaryWriter.", "Chapter": "Chương 1", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "28"},
+    {"Question": "Lớp nào cung cấp chỗ trữ tạm thời cho một dòng dữ liệu kiểu bytes?", "Ground Truth": "BufferedStream.", "Chapter": "Chương 1", "Difficulty": "Trung bình", "Question Type": "Khái niệm", "Page Reference": "28"},
+    {"Question": "Hàm hành sự nào của FileInfo dùng để tạo một đối tượng StreamReader đọc từ một tập tin văn bản hiện hữu?", "Ground Truth": "OpenText().", "Chapter": "Chương 1", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "42"},
+    {"Question": "Thuộc tính nào của lớp MemoryStream cho biết số bytes sẽ được cấp phát cho stream?", "Ground Truth": "Capacity.", "Chapter": "Chương 1", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "58"},
+    {"Question": "Tình trạng đối tượng (state object) trong quá trình đọc bất đồng bộ (Asynchronous I/O) có bắt buộc không?", "Ground Truth": "Không, nó là tùy chọn.", "Chapter": "Chương 1", "Difficulty": "Khó", "Question Type": "Khái niệm", "Page Reference": "72"},
+    {"Question": "Lớp nào xây dựng trên lớp Socket để cung cấp những dịch vụ cao cấp TCP/IP cho việc nghe ngóng kết nối?", "Ground Truth": "TcpListener.", "Chapter": "Chương 1", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "78"},
+    {"Question": "Serialization (sản sinh hàng loạt) là gì?", "Ground Truth": "Là tiến trình chuyển đổi trạng thái của một đối tượng thành một loạt bytes tuyến tính ghi ra stream.", "Chapter": "Chương 1", "Difficulty": "Khó", "Question Type": "Định nghĩa", "Page Reference": "92"},
+    {"Question": "Attribute nào được dùng để đánh dấu một biến thành viên không tham gia vào quá trình serialization?", "Ground Truth": "[NonSerialized].", "Chapter": "Chương 1", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "94"},
+    {"Question": "Isolated storage cung cấp chức năng tương tự như tập tin nào trên Windows?", "Ground Truth": "Các tập tin .ini hoặc key HKEY_CURRENT_USER trên Windows Registry.", "Chapter": "Chương 1", "Difficulty": "Khó", "Question Type": "Khái niệm", "Page Reference": "106"},
+    {"Question": "Lớp nào là gốc rễ của phần lớn các lớp thuộc namespace System.Windows.Forms?", "Ground Truth": "Lớp Control.", "Chapter": "Chương 2", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "124"},
+    {"Question": "Thuộc tính nào của lớp Form cho biết vị trí xuất phát của biểu mẫu lúc chạy?", "Ground Truth": "StartPosition.", "Chapter": "Chương 2", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "160"},
+    {"Question": "Sự kiện (tình huống) nào xảy ra khi một biểu mẫu sắp sửa bị đóng lại?", "Ground Truth": "Closing.", "Chapter": "Chương 2", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "161"},
+    {"Question": "Lớp nào cung cấp chức năng quản lý một hệ thống trình đơn popup (shortcut menu)?", "Ground Truth": "ContextMenu.", "Chapter": "Chương 2", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "169"},
+    {"Question": "Thuộc tính nào của lớp ToolBar ấn định kích thước của một button trên thanh công cụ?", "Ground Truth": "ButtonSize.", "Chapter": "Chương 2", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "184"},
+    {"Question": "Phương thức nào của lớp Control dùng để ép ô control tự vẽ lại bằng cách ép một thông điệp vẽ vào hàng nối đuôi?", "Ground Truth": "Invalidate().", "Chapter": "Chương 2", "Difficulty": "Khó", "Question Type": "Khái niệm", "Page Reference": "144"},
+    {"Question": "Assembly manifest là gì?", "Ground Truth": "Là metadata mô tả trọn vẹn assembly bao gồm tên, phiên bản, các tập tin, và các assembly được qui chiếu.", "Chapter": "Chương 3", "Difficulty": "Trung bình", "Question Type": "Định nghĩa", "Page Reference": "232"},
+    {"Question": "Các tập tin PE (Portable Executable) của .NET chứa mã máy thô hay mã trung gian?", "Ground Truth": "Chứa đoạn mã viết theo ngôn ngữ trung gian MSIL.", "Chapter": "Chương 3", "Difficulty": "Khó", "Question Type": "Khái niệm", "Page Reference": "230"},
+    {"Question": "Nơi nào trong hệ thống dùng để trữ các shared assembly?", "Ground Truth": "Global Assembly Cache (GAC).", "Chapter": "Chương 3", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "265"},
+    {"Question": "Một con số phiên bản assembly gồm mấy phần và đó là những phần nào?", "Ground Truth": "Gồm 4 phần: major, minor, build, revision.", "Chapter": "Chương 3", "Difficulty": "Trung bình", "Question Type": "Khái niệm", "Page Reference": "267"},
+    {"Question": "Trình tiện ích nào dùng để kết sinh một strong name cho assembly?", "Ground Truth": "sn.exe.", "Chapter": "Chương 3", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "269"},
+    {"Question": "Lớp nào là gốc rễ của các lớp reflection trong .NET?", "Ground Truth": "Lớp Type.", "Chapter": "Chương 4", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "293"},
+    {"Question": "Kỹ thuật nào cho phép triệu gọi một hàm hành sự vào lúc chạy thay vì vào lúc biên dịch?", "Ground Truth": "Triệu gọi động trễ (late binding).", "Chapter": "Chương 4", "Difficulty": "Trung bình", "Question Type": "Khái niệm", "Page Reference": "308"},
+    {"Question": "Hàm hành sự nào của lớp Activator dùng để nạp động một thể hiện của lớp từ một đối tượng Type?", "Ground Truth": "CreateInstance().", "Chapter": "Chương 4", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "308"},
+    {"Question": "AttributeUsage dùng để làm gì?", "Ground Truth": "Là một meta-attribute dùng để cung cấp metadata cho một custom attribute, chỉ định target của attribute đó.", "Chapter": "Chương 4", "Difficulty": "Khó", "Question Type": "Khái niệm", "Page Reference": "284"}
+]
+
+phase2_data = [
+    {"Question": "Namespace nào cung cấp chức năng tạo động một assembly vào lúc chạy (on the fly)?", "Ground Truth": "System.Reflection.Emit.", "Chapter": "Chương 4", "Difficulty": "Khó", "Question Type": "Kiến thức", "Page Reference": "311"},
+    {"Question": "Lớp nào trong Reflection Emit được dùng để tạo ngôn ngữ trung gian (IL) nằm sau đối với một thành viên?", "Ground Truth": "ILGenerator.", "Chapter": "Chương 4", "Difficulty": "Khó", "Question Type": "Khái niệm", "Page Reference": "312"},
+    {"Question": "Khái niệm Remoting trong .NET là gì?", "Ground Truth": "Là tiến trình di chuyển một đối tượng xuyên qua một ranh giới process hoặc máy tính.", "Chapter": "Chương 5", "Difficulty": "Trung bình", "Question Type": "Định nghĩa", "Page Reference": "342"},
+    {"Question": "Một Application Domain (AppDomain) là gì?", "Ground Truth": "Là một ranh giới cách ly các ứng dụng trong cùng một process.", "Chapter": "Chương 5", "Difficulty": "Khó", "Question Type": "Định nghĩa", "Page Reference": "344"},
+    {"Question": "Hai loại formatter mặc nhiên được .NET Framework cung cấp cho Remoting là gì?", "Ground Truth": "SOAP Formatter và Binary Formatter.", "Chapter": "Chương 5", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "350"},
+    {"Question": "Lớp nào tượng trưng cho proxy phía client khi marshal theo qui chiếu?", "Ground Truth": "RealProxy hoặc Transparent proxy.", "Chapter": "Chương 5", "Difficulty": "Khó", "Question Type": "Khái niệm", "Page Reference": "350"},
+    {"Question": "Đối tượng well-known client-activated khác với well-known đối tượng như thế nào?", "Ground Truth": "Client-activated duy trì kết nối lâu dài cho tới khi nhu cầu thỏa mãn, well-known thiết lập kết nối mỗi lần có thông điệp.", "Chapter": "Chương 5", "Difficulty": "Khó", "Question Type": "Khái niệm", "Page Reference": "358"},
+    {"Question": "Đăng ký một well-known service kiểu Singleton có nghĩa là gì?", "Ground Truth": "Tất cả thông điệp từ mọi khách hàng sẽ được chuyển cho một đối tượng đơn độc chạy trên server.", "Chapter": "Chương 5", "Difficulty": "Trung bình", "Question Type": "Khái niệm", "Page Reference": "358"},
+    {"Question": "Mạch trình (thread) là gì?", "Ground Truth": "Là những process nhẹ cân chịu trách nhiệm thực hiện đa nhiệm trong lòng một ứng dụng.", "Chapter": "Chương 6", "Difficulty": "Dễ", "Question Type": "Định nghĩa", "Page Reference": "370"},
+    {"Question": "Lớp nào cung cấp chức năng đồng bộ hóa các đối tượng mạch trình sử dụng khóa chốt (lock) và tín hiệu chờ (wait/signal)?", "Ground Truth": "Lớp Monitor.", "Chapter": "Chương 6", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "372"},
+    {"Question": "Delegate nào được dùng để chỉ định hàm hành sự thi hành đầu tiên khi một mạch trình bắt đầu?", "Ground Truth": "ThreadStart.", "Chapter": "Chương 6", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "372"},
+    {"Question": "Hàm hành sự nào của lớp Thread dùng để bắt mạch trình ngủ yên trong một khoảng thời gian?", "Ground Truth": "Sleep().", "Chapter": "Chương 6", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "372"},
+    {"Question": "Deadlock (chết chùm) xảy ra khi nào?", "Ground Truth": "Khi hai hoặc nhiều mạch trình người này chờ người kia giải phóng nguồn lực và không người nào rảnh cả.", "Chapter": "Chương 6", "Difficulty": "Khó", "Question Type": "Định nghĩa", "Page Reference": "394"},
+    {"Question": "Lớp Interlocked cung cấp hai hàm hành sự cốt lõi nào để tăng giảm biến đồng bộ?", "Ground Truth": "Increment và Decrement.", "Chapter": "Chương 6", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "386"},
+    {"Question": "Dịch vụ nào cho phép managed code triệu gọi các hàm unmanaged được thi công trên một DLL viết theo C (Win32 API)?", "Ground Truth": "PInvoke (Platform Invocation).", "Chapter": "Chương 7", "Difficulty": "Khó", "Question Type": "Kiến thức", "Page Reference": "399"},
+    {"Question": "Thuộc tính nào của DllImportAttribute dùng để thiết lập qui ước triệu gọi (calling convention)?", "Ground Truth": "CallingConvention.", "Chapter": "Chương 7", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "400"},
+    {"Question": "Trình tiện ích nào dùng để tạo một proxy RCW từ một COM type library?", "Ground Truth": "tlbimp.exe.", "Chapter": "Chương 7", "Difficulty": "Khó", "Question Type": "Kiến thức", "Page Reference": "404"},
+    {"Question": "CCW (COM Callable Wrapper) làm nhiệm vụ gì?", "Ground Truth": "Là proxy để một COM client có thể gọi và sử dụng các kiểu dữ liệu .NET.", "Chapter": "Chương 7", "Difficulty": "Khó", "Question Type": "Định nghĩa", "Page Reference": "453"},
+    {"Question": "Các assembly .NET được đăng ký lên system registry cho COM sử dụng bằng công cụ nào?", "Ground Truth": "Regasm.exe.", "Chapter": "Chương 7", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "453"},
+    {"Question": "Web Forms chia giao diện người sử dụng thành 2 phần nào?", "Ground Truth": "Phần nhìn thấy được UI (Visual UI) và phần logic code-behind.", "Chapter": "Chương 8", "Difficulty": "Trung bình", "Question Type": "Khái niệm", "Page Reference": "482"},
+    {"Question": "Tình huống nào được phát pháo mỗi lần biểu mẫu Web được nạp vào?", "Ground Truth": "Page_Load.", "Chapter": "Chương 8", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "550"},
+    {"Question": "Lớp nào cho phép chia sẻ thông tin toàn cục giữa nhiều session trong một ứng dụng ASP.NET?", "Ground Truth": "HttpApplicationState.", "Chapter": "Chương 8", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "511"},
+    {"Question": "Để kiểm tra xem trang Web được nạp vào đáp ứng một client postback hay là truy cập lần đầu, ta dùng thuộc tính nào của Page?", "Ground Truth": "IsPostBack.", "Chapter": "Chương 8", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "520"},
+    {"Question": "Web Service sử dụng ngôn ngữ mô tả nào để khách hàng biết dịch vụ có thể làm được gì?", "Ground Truth": "WSDL (Web Service Description Language).", "Chapter": "Chương 9", "Difficulty": "Trung bình", "Question Type": "Kiến thức", "Page Reference": "558"},
+    {"Question": "Attribute nào phải được áp dụng cho mỗi hàm hành sự để nó có thể được triệu gọi từ xa thông qua HTTP?", "Ground Truth": "[WebMethod].", "Chapter": "Chương 9", "Difficulty": "Dễ", "Question Type": "Kiến thức", "Page Reference": "564"}
+]
+
+all_data = phase1_data + phase2_data
+
+def ensure_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+def save_csv(data, filename):
+    with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+def save_json(data, filename):
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+def save_ragas_json(data, filename):
+    ragas_format = []
+    for item in data:
+        ragas_format.append({
+            "question": item["Question"],
+            "ground_truth": item["Ground Truth"]
+        })
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(ragas_format, f, ensure_ascii=False, indent=4)
+
+def save_excel(data, filename):
+    if pd:
+        df = pd.DataFrame(data)
+        df.to_excel(filename, index=False)
+    else:
+        print("Pandas not installed, skipping Excel generation.")
+
+def create_readme(folder_path):
+    content = """# Dataset Benchmark 50 Câu Hỏi
+
+Thư mục này chứa toàn bộ dữ liệu 50 câu hỏi trắc nghiệm và ground truth được trích xuất từ tài liệu **"Sách Tự Học .NET Toàn Tập - Tập 2: C# và .NET Framework"**.
+
+Bộ dataset này được thiết kế để sử dụng cho Module Nghiên cứu RBL (RAG Benchmark) nhằm đánh giá các mô hình ngôn ngữ (LLM) và các kỹ thuật RAG.
+
+## Cấu trúc files
+- `test_set_50.csv`: Dữ liệu gốc ở định dạng bảng CSV (có thể import vào DB hoặc code).
+- `test_set_50.xlsx`: Dữ liệu gốc ở định dạng Excel (dễ đọc và chỉnh sửa bởi con người).
+- `test_set_50.json`: Dữ liệu đầy đủ ở định dạng JSON (dành cho API).
+- `ragas_dataset.json`: Dữ liệu được format sẵn chuẩn theo form của thư viện **RAGAS** (chỉ gồm `question` và `ground_truth`), sẵn sàng để chạy đánh giá.
+
+## Quy trình
+- **Giai đoạn 1**: 25 câu hỏi đầu tiên.
+- **Giai đoạn 2**: 25 câu hỏi tiếp theo.
+(Cả 2 giai đoạn đã được gộp chung vào tập tin 50 câu này cho dễ sử dụng).
+"""
+    with open(os.path.join(folder_path, "README.md"), 'w', encoding='utf-8') as f:
+        f.write(content)
+
+if __name__ == "__main__":
+    out_dir = "dataset"
+    ensure_dir(out_dir)
+    
+    save_csv(all_data, os.path.join(out_dir, "test_set_50.csv"))
+    save_json(all_data, os.path.join(out_dir, "test_set_50.json"))
+    save_ragas_json(all_data, os.path.join(out_dir, "ragas_dataset.json"))
+    save_excel(all_data, os.path.join(out_dir, "test_set_50.xlsx"))
+    create_readme(out_dir)
+    print("Dataset generation complete!")
