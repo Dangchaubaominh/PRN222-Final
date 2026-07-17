@@ -1,0 +1,71 @@
+@page
+@model RagChatbot.RazorPages.Pages.Packages.MineModel
+@{
+    ViewData["Title"] = "Gói của tôi";
+    long used = Model.TotalQuota - Model.RemainingQuota;
+    double pct = Model.TotalQuota > 0 ? (double)used / Model.TotalQuota * 100 : 0;
+}
+
+<div class="card mb-4">
+    <div class="card-header-custom"><h5><i class="bi bi-box-seam text-primary me-2"></i>Gói hiện tại</h5></div>
+    <div style="padding:20px 24px">
+        @if (Model.Current == null)
+        {
+            <p style="color:#6B7280">Bạn chưa có gói nào đang hoạt động.</p>
+            <a asp-page="/Packages/Buy" class="btn-app btn-primary-app"><i class="bi bi-bag"></i> Mua gói</a>
+        }
+        else
+        {
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                <div style="font-size:20px;font-weight:700">@Model.CurrentPackageName</div>
+                <div style="color:#6B7280;font-size:13px">Hết hạn @Model.Current.ExpireAt.ToLocalTime().ToString("dd/MM/yyyy")</div>
+            </div>
+            <div style="margin-top:12px">
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+                    <span>Đã dùng @used.ToString("N0") / @Model.TotalQuota.ToString("N0") token</span>
+                    <span><strong>@Model.RemainingQuota.ToString("N0")</strong> còn lại</span>
+                </div>
+                <div style="height:10px;background:#EEF2FF;border-radius:6px;overflow:hidden">
+                    <div style="height:100%;width:@pct.ToString("0.#")%;background:#6366F1"></div>
+                </div>
+            </div>
+            <a asp-page="/Packages/Buy" class="btn-app btn-ghost mt-3"><i class="bi bi-arrow-up-circle"></i> Đổi / nâng gói</a>
+        }
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid #eee;font-size:13.5px;color:#374151">
+            <i class="bi bi-coin text-warning me-1"></i> Token đã dùng tháng này: <strong>@Model.TokensThisMonth.ToString("N0")</strong>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header-custom"><h5><i class="bi bi-receipt text-primary me-2"></i>Lịch sử mua gói</h5></div>
+    <div style="padding:8px 24px 20px">
+        @if (!Model.Orders.Any())
+        {
+            <p style="color:#6B7280;margin:12px 0">Chưa có giao dịch nào.</p>
+        }
+        else
+        {
+            <table class="table table-hover" style="margin:0">
+                <thead>
+                    <tr><th>Ngày</th><th>Gói</th><th>Số tiền</th><th>Trạng thái</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var o in Model.Orders)
+                {
+                    <tr>
+                        <td>@o.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@Model.PackageNames.GetValueOrDefault(o.PackageId, "—")</td>
+                        <td>@o.Amount.ToString("N0") đ</td>
+                        <td>
+                            @if (o.Status == "Paid") { <span class="badge bg-success">Đã thanh toán</span> }
+                            else if (o.Status == "Failed") { <span class="badge bg-danger">Thất bại</span> }
+                            else { <span class="badge bg-secondary">Chờ</span> }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

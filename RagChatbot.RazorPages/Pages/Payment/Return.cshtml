@@ -1,0 +1,25 @@
+@page
+@model RagChatbot.RazorPages.Pages.Payment.ReturnModel
+@{
+    ViewData["Title"] = "Kết quả thanh toán";
+    var ok = Model.Result.Success;
+}
+
+<div class="card" style="max-width:520px;margin:40px auto">
+    <div style="padding:36px 28px;text-align:center">
+        <div style="font-size:56px;line-height:1">
+            @if (ok) { <i class="bi bi-check-circle-fill text-success"></i> }
+            else { <i class="bi bi-x-circle-fill text-danger"></i> }
+        </div>
+        <h3 style="margin-top:14px;font-weight:700">@(ok ? "Thanh toán thành công" : "Thanh toán thất bại")</h3>
+        <p style="color:#6B7280">@Model.Result.Message</p>
+        @if (ok && Model.Result.Amount > 0)
+        {
+            <p style="font-size:15px">Số tiền: <strong>@Model.Result.Amount.ToString("N0") đ</strong></p>
+        }
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <a asp-page="/Packages/Mine" class="btn-app btn-primary-app"><i class="bi bi-receipt"></i> Gói của tôi</a>
+            <a asp-page="/Home/Index" class="btn-app btn-ghost"><i class="bi bi-house"></i> Về trang chủ</a>
+        </div>
+    </div>
+</div>

@@ -21,6 +21,9 @@ namespace RagChatbot.DAL.Data
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<QuizQuestion> QuizQuestions { get; set; }
         public DbSet<QuizResult> QuizResults { get; set; }
+        public DbSet<Package> Packages { get; set; }
+        public DbSet<UserSubscription> UserSubscriptions { get; set; }
+        public DbSet<PaymentOrder> PaymentOrders { get; set; }
         public DbSet<TokenUsageLog> TokenUsageLogs { get; set; }
         public DbSet<SubjectChunkConfig> SubjectChunkConfigs { get; set; }
         public DbSet<BenchmarkRun> BenchmarkRuns { get; set; }
@@ -87,6 +90,18 @@ namespace RagChatbot.DAL.Data
                 .WithMany()
                 .HasForeignKey(qr => qr.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Mã giao dịch thanh toán là duy nhất
+            modelBuilder.Entity<PaymentOrder>()
+                .HasIndex(p => p.VnpTxnRef)
+                .IsUnique();
+
+            // Seed 3 gói mẫu
+            modelBuilder.Entity<Package>().HasData(
+                new Package { Id = 1, Name = "Free",  Price = 0,     TokenQuota = 50_000,    AllowedModels = "gemini-2.5-flash-lite", DurationDays = 30, IsActive = true },
+                new Package { Id = 2, Name = "Basic", Price = 49000, TokenQuota = 500_000,   AllowedModels = "gemini-2.5-flash-lite,gemini-2.5-flash", DurationDays = 30, IsActive = true },
+                new Package { Id = 3, Name = "Pro",   Price = 99000, TokenQuota = 2_000_000, AllowedModels = "gemini-2.5-flash-lite,gemini-2.5-flash,gemini-2.5-pro", DurationDays = 30, IsActive = true }
+            );
 
             // Index cho TokenUsageLog: query theo userId + khoảng thời gian
             modelBuilder.Entity<TokenUsageLog>()

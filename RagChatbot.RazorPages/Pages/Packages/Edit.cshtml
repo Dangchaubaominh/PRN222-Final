@@ -1,0 +1,44 @@
+@page
+@model RagChatbot.RazorPages.Pages.Packages.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Thêm gói" : "Sửa gói";
+}
+
+<div class="card" style="max-width:680px;margin:24px auto">
+    <div class="card-header-custom"><h5><i class="bi bi-box-seam text-primary me-2"></i>@ViewData["Title"]</h5></div>
+    <form method="post" style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+        <input type="hidden" asp-for="Input.Id" />
+        <div>
+            <label class="form-label">Tên gói</label>
+            <input asp-for="Input.Name" class="form-control-app" style="width:100%" />
+            <span asp-validation-for="Input.Name" class="text-danger"></span>
+        </div>
+        <div>
+            <label class="form-label">Giá (đ)</label>
+            <input asp-for="Input.Price" type="number" step="1000" class="form-control-app" style="width:100%" />
+        </div>
+        <div>
+            <label class="form-label">Quota token</label>
+            <input asp-for="Input.TokenQuota" type="number" class="form-control-app" style="width:100%" />
+        </div>
+        <div>
+            <label class="form-label">Model cho phép (CSV)</label>
+            <input asp-for="Input.AllowedModels" class="form-control-app" style="width:100%"
+                   placeholder="gemini-2.5-flash-lite,gemini-2.5-flash" />
+        </div>
+        <div>
+            <label class="form-label">Số ngày hiệu lực</label>
+            <input asp-for="Input.DurationDays" type="number" class="form-control-app" style="width:100%" />
+        </div>
+        <div class="form-check">
+            <input asp-for="Input.IsActive" class="form-check-input" />
+            <label class="form-check-label" asp-for="Input.IsActive">Đang bán</label>
+        </div>
+        <div style="display:flex;gap:10px">
+            <button type="submit" class="btn-app btn-primary-app"><i class="bi bi-check-lg"></i> Lưu</button>
+            <a asp-page="/Packages/Index" class="btn-app btn-ghost">Hủy</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

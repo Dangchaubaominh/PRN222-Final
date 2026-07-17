@@ -64,7 +64,7 @@
                 <div class="card-header-custom">
                     <h5><i class="bi bi-pie-chart text-primary me-2"></i>Tài khoản theo vai trò</h5>
                 </div>
-                <div style="padding:20px 24px;"><canvas id="chartRoles" height="220"></canvas></div>
+                <div style="position:relative;height:280px;padding:16px 24px;"><canvas id="chartRoles"></canvas></div>
             </div>
         </div>
     }
@@ -73,7 +73,17 @@
             <div class="card-header-custom">
                 <h5><i class="bi bi-bar-chart text-primary me-2"></i>Tài liệu theo môn học</h5>
             </div>
-            <div style="padding:20px 24px;"><canvas id="chartDocs" height="220"></canvas></div>
+            @if (Model.SubjectNames.Any())
+            {
+                <div style="position:relative;height:280px;padding:16px 24px;"><canvas id="chartDocs"></canvas></div>
+            }
+            else
+            {
+                <div style="height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9CA3AF;gap:8px">
+                    <i class="bi bi-bar-chart" style="font-size:32px"></i>
+                    <div style="font-size:13.5px">Chưa có tài liệu theo môn để hiển thị</div>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -213,6 +223,7 @@
                     }]
                 },
                 options: {
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
                 }
@@ -231,6 +242,7 @@
                     }]
                 },
                 options: {
+                    responsive: true, maintainAspectRatio: false,
                     cutout: '62%',
                     plugins: { legend: { position: 'bottom' } }
                 }

@@ -9,7 +9,7 @@ Chia theo **function** (mỗi người sở hữu một mảng tính năng xuyê
 
 | # | Thành viên | Mảng sở hữu | Quy mô |
 |---|---|---|---|
-| **1** | **Bảo Minh** | Gói & Thanh toán VNPay (doanh thu) | Lớn |
+| **1** | **Bảo Minh** | Gói & Thanh toán MoMo (doanh thu) | Lớn |
 | **2** | **Tân** | Token & Chọn model | Lớn |
 | **3** | **Vũ** | Thống kê & Báo cáo | Lớn |
 | **4** | **Đại** | Chunk config + Citation + Benchmark | 3 feature nhỏ ≈ 1 lớn |
@@ -22,13 +22,13 @@ Chia theo **function** (mỗi người sở hữu một mảng tính năng xuyê
 
 ---
 
-## Người 1 (Bảo Minh) — Gói & Thanh toán VNPay
+## Người 1 (Bảo Minh) — Gói & Thanh toán MoMo
 
-**Mục tiêu:** Học sinh mua gói (quota token/tháng) qua VNPay sandbox; sinh dữ liệu doanh thu.
+**Mục tiêu:** Học sinh mua gói (quota token/tháng) qua MoMo sandbox; sinh dữ liệu doanh thu.
 
 - **DAL:** entity `Package` (Name, Price, TokenQuota, AllowedModels, DurationDays, IsActive), `UserSubscription` (UserId, PackageId, StartAt, ExpireAt, TokensUsed, Status), `PaymentOrder` (UserId, PackageId, Amount, VnpTxnRef, Status, CreatedAt, PaidAt) + migration + repository.
-- **BLL:** `PackageService` (CRUD, Admin), `SubscriptionService` (gói đang hoạt động, gia hạn), `IPaymentService` → `VnPayService` (tạo URL thanh toán, xác thực return/IPN, cập nhật `PaymentOrder`).
-- **UI:** trang Admin quản lý Gói; trang Học sinh xem/mua Gói; trang Checkout + endpoint callback VNPay; trang "Gói của tôi".
+- **BLL:** `PackageService` (CRUD, Admin), `SubscriptionService` (gói đang hoạt động, gia hạn), `IPaymentService` → `MoMoService` (tạo URL thanh toán, xác thực return/IPN, cập nhật `PaymentOrder`).
+- **UI:** trang Admin quản lý Gói; trang Học sinh xem/mua Gói; trang Checkout + endpoint callback MoMo; trang "Gói của tôi".
 - **Seed:** 3 gói mẫu Free / Basic / Pro.
 
 **Phụ thuộc:** không (tự chứa). **Bắt đầu ngay.**
@@ -80,7 +80,7 @@ Chia theo **function** (mỗi người sở hữu một mảng tính năng xuyê
 
 ```bash
 git checkout main && git pull
-git checkout -b <mang>-<viec>-<ten>     # vd: goi-vnpay-service-minh
+git checkout -b <mang>-<viec>-<ten>     # vd: goi-momo-service-minh
 # ... code ...
 dotnet build && dotnet test             # xanh mới mở PR
 git add -A && git commit -m "feat(<mang>): <mô tả>"
@@ -89,4 +89,4 @@ git push -u origin <mang>-<viec>-<ten>  # mở Pull Request để review & merge
 ```
 
 - 1 nhiệm vụ = 1 nhánh + 1 PR → `main` luôn build được.
-- Secret (`appsettings.json`, VNPay key) để ở User Secrets / file gitignore — không commit.
+- Secret (`appsettings.json`, MoMo key) để ở User Secrets / file gitignore — không commit.

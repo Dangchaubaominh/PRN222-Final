@@ -1,0 +1,52 @@
+@page
+@model RagChatbot.RazorPages.Pages.Packages.IndexModel
+@{
+    ViewData["Title"] = "Quản lý gói";
+}
+
+<div class="card">
+    <div class="card-header-custom" style="display:flex;justify-content:space-between;align-items:center">
+        <h5><i class="bi bi-box-seam text-primary me-2"></i>Danh sách gói</h5>
+        <a asp-page="/Packages/Edit" class="btn-app btn-primary-app"><i class="bi bi-plus-lg"></i> Thêm gói</a>
+    </div>
+    <div style="padding:8px 24px 20px">
+        <table class="table table-hover align-middle" style="margin:0">
+            <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th class="text-end">Giá</th>
+                    <th class="text-end">Quota</th>
+                    <th>Model</th>
+                    <th class="text-center">Ngày</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model.Packages)
+            {
+                <tr>
+                    <td><strong>@p.Name</strong></td>
+                    <td class="text-end">@p.Price.ToString("N0") đ</td>
+                    <td class="text-end">@p.TokenQuota.ToString("N0")</td>
+                    <td style="font-size:12px;color:#6B7280">@p.AllowedModels</td>
+                    <td class="text-center">@p.DurationDays</td>
+                    <td class="text-center">
+                        @if (p.IsActive) { <span class="badge bg-success">Đang bán</span> }
+                        else { <span class="badge bg-secondary">Ẩn</span> }
+                    </td>
+                    <td class="text-end" style="white-space:nowrap">
+                        <div style="display:inline-flex;gap:6px;justify-content:flex-end">
+                            <a asp-page="/Packages/Edit" asp-route-id="@p.Id" class="btn-app btn-ghost btn-sm" title="Sửa"><i class="bi bi-pencil"></i></a>
+                            <form method="post" asp-page-handler="Toggle" style="display:inline">
+                                <input type="hidden" name="id" value="@p.Id" />
+                                <button type="submit" class="btn-app btn-ghost btn-sm">@(p.IsActive ? "Ẩn" : "Hiện")</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

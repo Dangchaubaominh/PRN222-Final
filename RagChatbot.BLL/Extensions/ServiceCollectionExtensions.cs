@@ -26,6 +26,9 @@ namespace RagChatbot.BLL.Extensions
             services.AddScoped<IUserSubjectRepository, UserSubjectRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+            services.AddScoped<IPackageRepository, PackageRepository>();
+            services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<ITokenUsageRepository, TokenUsageRepository>();
             services.AddScoped<IChunkConfigRepository, ChunkConfigRepository>();
             services.AddScoped<IBenchmarkRepository, BenchmarkRepository>();
@@ -42,11 +45,13 @@ namespace RagChatbot.BLL.Extensions
             services.AddScoped<IDocumentProcessingService, DocumentProcessingService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IChatMessageService, ChatMessageService>();
+            services.AddScoped<IPackageService, PackageService>();
+            services.AddScoped<ISubscriptionService, SubscriptionService>();
+            services.AddScoped<IPaymentService, MoMoService>();
             services.AddScoped<ITokenUsageService, TokenUsageService>();
             services.AddScoped<IChunkConfigService, ChunkConfigService>();
             services.AddScoped<IBenchmarkService, BenchmarkService>();
-            // TODO: Thay SubscriptionServiceStub bằng SubscriptionService thật khi Bảo Minh xong
-            services.AddScoped<ISubscriptionService, SubscriptionServiceStub>();
+            services.AddScoped<IStatisticsService, StatisticsService>();
 
             return services;
         }

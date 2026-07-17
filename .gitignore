@@ -15,3 +15,7 @@ RagChatbot.RazorPages/wwwroot/uploads/
 
 # Local dev tooling (launch config for preview)
 .claude/
+
+# Visual Studio upgrade artifacts
+Backup/
+UpgradeLog*.htm
