@@ -56,10 +56,10 @@
 
 <!-- ===== TAB: Viewer ===== -->
 <div id="tab-viewer" class="vd-pane fade-in-up">
-    <div class="card" style="overflow:hidden;height:calc(100vh - var(--topbar-height) - 210px)">
+    <div class="card" id="docViewerCard" style="overflow:hidden;height:400px">
         @if (ext == ".pdf")
         {
-            <iframe src="@doc.FilePath" style="width:100%;height:100%;border:none;display:block"></iframe>
+            <iframe src="@Url.Page("ViewDoc", "File", new { id = doc.Id })" style="width:100%;height:100%;border:none;display:block"></iframe>
         }
         else if (ext == ".txt")
         {
@@ -70,7 +70,7 @@
         else if (ext == ".jpg" || ext == ".png" || ext == ".jpeg" || ext == ".gif")
         {
             <div style="height:100%;display:flex;align-items:center;justify-content:center;background:#0F172A">
-                <img src="@doc.FilePath" style="max-width:100%;max-height:100%;object-fit:contain" alt="@doc.FileName" />
+                <img src="@Url.Page("ViewDoc", "File", new { id = doc.Id })" style="max-width:100%;max-height:100%;object-fit:contain" alt="@doc.FileName" />
             </div>
         }
         else
@@ -86,6 +86,9 @@
                 </a>
             </div>
         }
+    </div>
+    <div id="viewerResizeHandle" class="viewer-resize-handle" title="Kéo để chỉnh chiều cao">
+        <i class="bi bi-grip-horizontal"></i>
     </div>
 </div>
 
@@ -181,6 +184,22 @@
 
 @section Scripts {
 <style>
+/* ---- Resize handle cho khung xem tài liệu ---- */
+.viewer-resize-handle {
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: row-resize;
+    color: var(--text-3);
+    user-select: none;
+    touch-action: none;
+}
+.viewer-resize-handle:hover,
+.viewer-resize-handle.dragging {
+    color: var(--primary);
+}
+
 /* ---- Tab bar ---- */
 .vd-tabs {
     display: flex;
@@ -382,5 +401,70 @@ function showFull(index, btn) {
     btn.classList.add('d-none');
     full.classList.remove('d-none');
 }
+
+// Khung xem tự tính đúng chiều cao còn lại tới đáy viewport lúc mới vào trang
+// (không phụ thuộc đoán px thủ công) — luôn khít xuống đáy trang, không tràn, không hụt.
+// Sau đó người dùng có thể tự kéo thanh grip bên dưới để chỉnh cao/thấp thêm.
+var docViewerUserResized = false;
+
+function resizeDocViewer() {
+    if (docViewerUserResized) return; // người dùng đã tự kéo, không ghi đè nữa
+    var card = document.getElementById('docViewerCard');
+    if (!card) return;
+    var top = card.getBoundingClientRect().top;
+    var bottomMargin = 24;
+    var height = window.innerHeight - top - bottomMargin;
+    card.style.height = Math.max(height, 300) + 'px';
+}
+window.addEventListener('resize', resizeDocViewer);
+window.addEventListener('load', resizeDocViewer);
+resizeDocViewer();
+
+// ---- Kéo thả để chỉnh chiều cao khung xem ----
+(function () {
+    var card   = document.getElementById('docViewerCard');
+    var handle = document.getElementById('viewerResizeHandle');
+    if (!card || !handle) return;
+
+    var startY = 0;
+    var startHeight = 0;
+
+    function onMove(clientY) {
+        var delta = clientY - startY;
+        var newHeight = Math.max(startHeight + delta, 200);
+        card.style.height = newHeight + 'px';
+    }
+
+    function onMouseMove(e) { onMove(e.clientY); }
+    function onTouchMove(e) { onMove(e.touches[0].clientY); e.preventDefault(); }
+
+    function stopDrag() {
+        handle.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', stopDrag);
+    }
+
+    function startDrag(clientY) {
+        docViewerUserResized = true;
+        startY = clientY;
+        startHeight = card.getBoundingClientRect().height;
+        handle.classList.add('dragging');
+    }
+
+    handle.addEventListener('mousedown', function (e) {
+        startDrag(e.clientY);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', stopDrag);
+        e.preventDefault();
+    });
+
+    handle.addEventListener('touchstart', function (e) {
+        startDrag(e.touches[0].clientY);
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend', stopDrag);
+    });
+})();
 </script>
 }

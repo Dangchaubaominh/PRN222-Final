@@ -54,5 +54,31 @@ namespace RagChatbot.RazorPages.Pages.Document
 
             return Page();
         }
+
+        // Phục vụ nội dung file để xem trực tiếp (iframe PDF / thẻ img).
+        // Không dùng thẳng "doc.FilePath" trong src vì tên file có thể chứa ký tự
+        // đặc biệt (vd "#") khiến trình duyệt hiểu nhầm thành URL fragment và cắt cụt
+        // đường dẫn trước khi gửi request — nên phải route qua id (Guid) an toàn.
+        public IActionResult OnGetFile(Guid id)
+        {
+            var document = _documentService.GetDocumentById(id);
+            if (document == null) return NotFound();
+            if (!CanAccess(document.SubjectId)) return Forbid();
+
+            string physicalPath = Path.Combine(_env.WebRootPath, document.FilePath.TrimStart('/'));
+            if (!System.IO.File.Exists(physicalPath)) return NotFound();
+
+            string contentType = Path.GetExtension(document.FileName).ToLower() switch
+            {
+                ".pdf" => "application/pdf",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                _ => "application/octet-stream"
+            };
+
+            // Không truyền fileDownloadName để trình duyệt hiển thị inline thay vì ép tải về.
+            return PhysicalFile(physicalPath, contentType);
+        }
     }
 }
