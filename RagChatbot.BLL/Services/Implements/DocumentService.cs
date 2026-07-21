@@ -7,11 +7,17 @@ using RagChatbot.BLL.DTOs;
 using RagChatbot.BLL.Services.Interfaces;
 using RagChatbot.DAL.Entities;
 using RagChatbot.DAL.Repositories.Interfaces;
+using UglyToad.PdfPig;
 
 namespace RagChatbot.BLL.Services.Implements
 {
     public class DocumentService : IDocumentService
     {
+        // Chặn từ lúc upload để worker xử lý nền không bị "kẹt" hàng giờ với 1 file khổng lồ,
+        // làm chậm lây sang việc xử lý tài liệu của người khác (worker chạy tuần tự, dùng chung).
+        private const long MaxFileSizeBytes = 20 * 1024 * 1024; // 20 MB
+        private const int MaxPdfPages = 300;
+
         private readonly IDocumentRepository _documentRepository;
         private readonly IDocumentChunkRepository _chunkRepository;
         private readonly IAIService _aiService;
@@ -45,10 +51,34 @@ namespace RagChatbot.BLL.Services.Implements
             return entity == null ? null : ToDto(entity);
         }
 
-        public async Task<DocumentUploadResult> UploadDocumentAsync(Guid subjectId, string fileName, Stream fileStream, string uploadPath, int uploaderId, int accessLevel)
+        public async Task<(DocumentUploadResult Result, int? PdfPageCount)> UploadDocumentAsync(Guid subjectId, string fileName, Stream fileStream, string uploadPath, int uploaderId, int accessLevel)
         {
             if (_documentRepository.ExistsByFileName(subjectId, fileName))
-                return DocumentUploadResult.Duplicate;
+                return (DocumentUploadResult.Duplicate, null);
+
+            if (fileStream.CanSeek && fileStream.Length > MaxFileSizeBytes)
+                return (DocumentUploadResult.TooLarge, null);
+
+            if (Path.GetExtension(fileName).ToLower() == ".pdf" && fileStream.CanSeek)
+            {
+                try
+                {
+                    using (var pdf = PdfDocument.Open(fileStream))
+                    {
+                        if (pdf.NumberOfPages > MaxPdfPages)
+                            return (DocumentUploadResult.TooManyPages, pdf.NumberOfPages);
+                    }
+                }
+                catch
+                {
+                    // File PDF hỏng/không đọc được — để bước xử lý nền báo Failed như bình thường,
+                    // không chặn ở đây vì đây chỉ là bước đếm trang.
+                }
+                finally
+                {
+                    fileStream.Position = 0;
+                }
+            }
 
             try
             {
@@ -76,11 +106,11 @@ namespace RagChatbot.BLL.Services.Implements
                 };
 
                 _documentRepository.Add(document);
-                return DocumentUploadResult.Success;
+                return (DocumentUploadResult.Success, null);
             }
             catch
             {
-                return DocumentUploadResult.Error;
+                return (DocumentUploadResult.Error, null);
             }
         }
 
