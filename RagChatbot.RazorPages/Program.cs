@@ -76,6 +76,10 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+// Phục vụ file tĩnh runtime (tài liệu upload vào wwwroot/uploads) — MapStaticAssets bên dưới
+// chỉ phục vụ asset đã biết lúc build, không thấy các file được ghi vào wwwroot sau khi chạy.
+app.UseStaticFiles();
+
 app.MapStaticAssets();
 
 // Trang gốc "/" → điều hướng về Tổng quan (sẽ tự đẩy về Login nếu chưa đăng nhập)

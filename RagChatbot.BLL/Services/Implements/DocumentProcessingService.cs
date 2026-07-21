@@ -16,6 +16,8 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Tesseract;
 
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("RagChatbot.Tests")]
+
 namespace RagChatbot.BLL.Services.Implements
 {
     public class DocumentProcessingService : IDocumentProcessingService
@@ -84,16 +86,26 @@ namespace RagChatbot.BLL.Services.Implements
                     return false;
                 }
 
-                // 3. Semantic Chunking: chia văn bản theo ranh giới đoạn văn / câu
-                //    (không bao giờ cắt giữa câu, overlap theo câu thay vì từ)
+                // 3. Chunking theo Strategy cấu hình cho môn học:
+                //    - "Semantic": chia theo ranh giới đoạn văn/câu (không cắt giữa câu, kích thước không đều)
+                //    - "Fixed": cắt cứng đúng N từ mỗi chunk (kích thước đều tuyệt đối theo MaxWordsPerChunk)
+                //    Ghép toàn bộ trang thành 1 luồng văn bản liên tục trước khi chia — nếu chia riêng
+                //    từng trang, trang nào ít chữ hơn MaxWordsPerChunk sẽ luôn ra 1 chunk ngắn hụt,
+                //    kể cả ở chế độ Fixed (không thể "mượn" thêm chữ từ trang kế tiếp để đủ N từ).
                 onProgress?.Invoke("Đang chia nhỏ văn bản (Chunking)...");
                 var chunkConfig = await _chunkConfigService.GetForSubjectAsync(doc.SubjectId);
-                var chunks = textSegments
-                    .Where(segment => !string.IsNullOrWhiteSpace(segment.Text))
-                    .SelectMany(segment => SemanticChunker.SplitText(segment.Text,
-                                                                     maxWordsPerChunk: chunkConfig.MaxWordsPerChunk,
-                                                                     overlapSentences:  chunkConfig.OverlapSentences)
-                                                          .Select(text => new TextSegment(text, segment.PageNumber)))
+
+                var validSegments = textSegments.Where(segment => !string.IsNullOrWhiteSpace(segment.Text)).ToList();
+                var (fullText, pageWordBoundaries, pageNumbers) = MergeSegments(validSegments);
+
+                int wordCursor = 0;
+                var chunks = SplitByStrategy(fullText, chunkConfig)
+                    .Select(chunkText =>
+                    {
+                        var segment = new TextSegment(chunkText, PageForWordIndex(wordCursor, pageWordBoundaries, pageNumbers));
+                        wordCursor += CountWords(chunkText);
+                        return segment;
+                    })
                     .ToList();
 
                 // 4. Gọi AI chuyển từng chunk thành Vector embedding 768 chiều
@@ -137,6 +149,53 @@ namespace RagChatbot.BLL.Services.Implements
                 }
                 return false;
             }
+        }
+
+        internal static List<string> SplitByStrategy(string text, SubjectChunkConfig cfg)
+        {
+            return string.Equals(cfg.Strategy, "Fixed", StringComparison.OrdinalIgnoreCase)
+                ? FixedChunker.SplitText(text, cfg.MaxWordsPerChunk, overlapWords: cfg.OverlapSentences)
+                : SemanticChunker.SplitText(text, cfg.MaxWordsPerChunk, overlapSentences: cfg.OverlapSentences);
+        }
+
+        /// <summary>
+        /// Ghép text các trang thành 1 chuỗi liên tục (giữ nguyên xuống dòng nội bộ mỗi trang
+        /// để SemanticChunker vẫn nhận diện được ranh giới đoạn văn), đồng thời trả về mốc số từ
+        /// tích luỹ cuối mỗi trang — dùng để suy ra trang gần đúng của mỗi chunk sau khi chia.
+        /// </summary>
+        internal static (string FullText, int[] PageWordBoundaries, int?[] PageNumbers) MergeSegments(List<TextSegment> segments)
+        {
+            var sb = new StringBuilder();
+            var boundaries = new int[segments.Count];
+            var pages = new int?[segments.Count];
+            int running = 0;
+
+            for (int i = 0; i < segments.Count; i++)
+            {
+                if (sb.Length > 0) sb.Append(' ');
+                sb.Append(segments[i].Text);
+
+                running += CountWords(segments[i].Text);
+                boundaries[i] = running;
+                pages[i] = segments[i].PageNumber;
+            }
+
+            return (sb.ToString(), boundaries, pages);
+        }
+
+        /// <summary>Trang chứa từ thứ <paramref name="wordIndex"/> (0-based) trong văn bản đã ghép.</summary>
+        internal static int? PageForWordIndex(int wordIndex, int[] pageWordBoundaries, int?[] pageNumbers)
+        {
+            for (int i = 0; i < pageWordBoundaries.Length; i++)
+                if (wordIndex < pageWordBoundaries[i]) return pageNumbers[i];
+
+            return pageNumbers.Length > 0 ? pageNumbers[^1] : null;
+        }
+
+        internal static int CountWords(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return 0;
+            return text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
         }
 
         private List<TextSegment> ExtractTextFromPdf(string filePath)
@@ -216,6 +275,6 @@ namespace RagChatbot.BLL.Services.Implements
             return sb.ToString();
         }
 
-        private sealed record TextSegment(string Text, int? PageNumber);
+        internal sealed record TextSegment(string Text, int? PageNumber);
     }
 }
