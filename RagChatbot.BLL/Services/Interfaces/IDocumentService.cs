@@ -10,14 +10,17 @@ namespace RagChatbot.BLL.Services.Interfaces
     {
         Success,
         Duplicate,
-        Error
+        Error,
+        TooLarge,
+        TooManyPages
     }
 
     public interface IDocumentService
     {
         IEnumerable<DocumentDto> GetDocumentsBySubject(Guid subjectId, int currentUserId, string currentUserRole);
         DocumentDto GetDocumentById(Guid id);
-        Task<DocumentUploadResult> UploadDocumentAsync(Guid subjectId, string fileName, Stream fileStream, string uploadPath, int uploaderId, int accessLevel);
+        // PdfPageCount chỉ có giá trị khi Result == TooManyPages (số trang thực tế của file vừa chọn)
+        Task<(DocumentUploadResult Result, int? PdfPageCount)> UploadDocumentAsync(Guid subjectId, string fileName, Stream fileStream, string uploadPath, int uploaderId, int accessLevel);
         bool DeleteDocument(Guid id, string rootPath);
 
         // Tổng số tài liệu trong toàn hệ thống (dùng cho dashboard)

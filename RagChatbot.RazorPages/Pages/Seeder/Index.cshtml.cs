@@ -75,7 +75,7 @@ namespace RagChatbot.RazorPages.Pages.Seeder
                         // 1. Upload tài liệu qua service
                         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                         int uploaderId = int.Parse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)!);
-                        var uploadResult = await _documentService.UploadDocumentAsync(
+                        var (uploadResult, _) = await _documentService.UploadDocumentAsync(
                             subject.Id, uniqueFileName, stream, uploadsFolder, uploaderId, 0 /* Public */);
 
                         if (uploadResult == DocumentUploadResult.Duplicate)
@@ -86,6 +86,11 @@ namespace RagChatbot.RazorPages.Pages.Seeder
                         if (uploadResult == DocumentUploadResult.Error)
                         {
                             results.Add($"❌ [{subject.Code}] {uniqueFileName} — upload thất bại");
+                            continue;
+                        }
+                        if (uploadResult == DocumentUploadResult.TooLarge || uploadResult == DocumentUploadResult.TooManyPages)
+                        {
+                            results.Add($"❌ [{subject.Code}] {uniqueFileName} — vượt giới hạn cho phép, bỏ qua");
                             continue;
                         }
 

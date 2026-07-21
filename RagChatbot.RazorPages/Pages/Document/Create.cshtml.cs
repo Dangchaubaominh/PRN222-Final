@@ -73,12 +73,20 @@ namespace RagChatbot.RazorPages.Pages.Document
             using (var stream = UploadFile.OpenReadStream())
             {
                 int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var result = await _documentService.UploadDocumentAsync(SubjectId, UploadFile.FileName, stream, uploadsFolder, userId, AccessLevel);
+                var (result, pdfPageCount) = await _documentService.UploadDocumentAsync(SubjectId, UploadFile.FileName, stream, uploadsFolder, userId, AccessLevel);
 
                 switch (result)
                 {
                     case DocumentUploadResult.Duplicate:
                         ModelState.AddModelError("", $"Tài liệu \"{UploadFile.FileName}\" đã tồn tại trong môn học này. Vui lòng đổi tên file hoặc xóa tài liệu cũ trước khi upload lại.");
+                        return Page();
+
+                    case DocumentUploadResult.TooLarge:
+                        ModelState.AddModelError("", $"File \"{UploadFile.FileName}\" quá lớn ({UploadFile.Length / 1024.0 / 1024.0:F1}MB). Kích thước tối đa cho phép là 20MB.");
+                        return Page();
+
+                    case DocumentUploadResult.TooManyPages:
+                        ModelState.AddModelError("", $"File \"{UploadFile.FileName}\" có {pdfPageCount} trang, vượt quá giới hạn tối đa 300 trang.");
                         return Page();
 
                     case DocumentUploadResult.Error:
